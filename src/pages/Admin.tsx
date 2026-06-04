@@ -18,6 +18,16 @@ import { supabase } from '../lib/supabase'
 import { fetchGameDays, fetchAllFixtures } from '../lib/fixtures'
 import type { GameDay, Fixture, AdminUserRow } from '../types'
 
+function formatSignupDate(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function Admin() {
   const { user } = useAuth()
   const [gameDays, setGameDays] = useState<GameDay[]>([])
@@ -25,9 +35,11 @@ export default function Admin() {
   const [users, setUsers] = useState<AdminUserRow[]>([])
   const [selectedGameDay, setSelectedGameDay] = useState<number | 'all'>('all')
   const [loading, setLoading] = useState(true)
-  const [resetUserId, setResetUserId] = useState('')
+  const [passcodeResetUserId, setPasscodeResetUserId] = useState<string | null>(null)
   const [newPasscode, setNewPasscode] = useState('')
+  const [resettingPasscodeUserId, setResettingPasscodeUserId] = useState<string | null>(null)
   const [togglingPaidId, setTogglingPaidId] = useState<string | null>(null)
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -124,26 +136,81 @@ export default function Admin() {
     await load()
   }
 
-  const handleResetPasscode = async () => {
-    if (!user || !resetUserId || newPasscode.length !== 4) {
-      toast.error('Select a user and enter a 4-digit passcode')
+  const handleResetPasscode = async (targetUserId: string) => {
+    if (!user || newPasscode.length !== 4) {
+      toast.error('Enter a 4-digit passcode')
       return
     }
 
-    const { error } = await supabase.rpc('reset_user_passcode', {
-      p_admin_id: user.id,
-      p_session_token: user.session_token,
-      p_target_user_id: resetUserId,
-      p_new_passcode: newPasscode,
-    })
+    setResettingPasscodeUserId(targetUserId)
 
-    if (error) {
-      toast.error(error.message)
-      return
+    try {
+      if (isDevBypassSession(user)) {
+        toast.success('Passcode reset (preview only)')
+        setPasscodeResetUserId(null)
+        setNewPasscode('')
+        return
+      }
+
+      const { error } = await supabase.rpc('reset_user_passcode', {
+        p_admin_id: user.id,
+        p_session_token: user.session_token,
+        p_target_user_id: targetUserId,
+        p_new_passcode: newPasscode,
+      })
+
+      if (error) throw error
+
+      toast.success('Passcode reset successfully')
+      setPasscodeResetUserId(null)
+      setNewPasscode('')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to reset passcode')
+    } finally {
+      setResettingPasscodeUserId(null)
     }
+  }
 
-    toast.success('Passcode reset successfully')
-    setNewPasscode('')
+  const handleDeleteUser = async (target: AdminUserRow) => {
+    if (!user) return
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${target.display_name}? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setDeletingUserId(target.id)
+
+    try {
+      if (isDevBypassSession(user)) {
+        setUsers((prev) => prev.filter((u) => u.id !== target.id))
+        if (passcodeResetUserId === target.id) {
+          setPasscodeResetUserId(null)
+          setNewPasscode('')
+        }
+        toast.success(`${target.display_name} deleted (preview only)`)
+        return
+      }
+
+      const { error } = await supabase.rpc('admin_delete_user', {
+        p_admin_id: user.id,
+        p_session_token: user.session_token,
+        p_target_user_id: target.id,
+      })
+
+      if (error) throw error
+
+      setUsers((prev) => prev.filter((u) => u.id !== target.id))
+      if (passcodeResetUserId === target.id) {
+        setPasscodeResetUserId(null)
+        setNewPasscode('')
+      }
+      toast.success(`${target.display_name} deleted`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete user')
+    } finally {
+      setDeletingUserId(null)
+    }
   }
 
   const handleTogglePaid = async (userId: string, hasPaid: boolean) => {
@@ -275,15 +342,20 @@ export default function Admin() {
           />
         </AdminSection>
 
-        <AdminSection title="User Manager">
+        <AdminSection
+          title="User Manager"
+          description="Compare signup dates to spot duplicate accounts with similar names."
+        >
           <div className="overflow-hidden min-w-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[480px]">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="border-b border-brand-blue/10 text-gray-500 uppercase text-xs">
                     <th className="text-left p-4 font-medium">Username</th>
                     <th className="text-left p-4 font-medium">Display Name</th>
+                    <th className="text-left p-4 font-medium">Signed Up</th>
                     <th className="text-right p-4 font-medium">Points</th>
+                    <th className="text-right p-4 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -291,35 +363,69 @@ export default function Admin() {
                     <tr key={u.id} className="border-b border-brand-blue/5 hover:bg-white/40">
                       <td className="p-4 font-mono text-gray-500 text-xs">{u.username}</td>
                       <td className="p-4 text-brand-navy font-medium">{u.display_name}</td>
+                      <td className="p-4 text-gray-500 text-xs whitespace-nowrap">
+                        {formatSignupDate(u.created_at)}
+                      </td>
                       <td className="p-4 text-right text-brand-blue font-mono font-bold">{u.total_points}</td>
+                      <td className="p-4 text-right">
+                        {passcodeResetUserId === u.id ? (
+                          <div className="flex items-center justify-end gap-2 flex-wrap">
+                            <input
+                              type="text"
+                              maxLength={4}
+                              value={newPasscode}
+                              onChange={(e) => setNewPasscode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                              placeholder="4-digit PIN"
+                              autoFocus
+                              className="input-field w-24 text-sm py-1.5 text-center font-mono"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleResetPasscode(u.id)}
+                              disabled={resettingPasscodeUserId === u.id || newPasscode.length !== 4}
+                              className="text-sm font-medium text-brand-blue hover:text-brand-navy disabled:opacity-50"
+                            >
+                              {resettingPasscodeUserId === u.id ? 'Saving…' : 'Confirm'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPasscodeResetUserId(null)
+                                setNewPasscode('')
+                              }}
+                              disabled={resettingPasscodeUserId === u.id}
+                              className="text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPasscodeResetUserId(u.id)
+                                setNewPasscode('')
+                              }}
+                              className="text-sm font-medium text-brand-blue hover:text-brand-navy"
+                            >
+                              Reset Passcode
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(u)}
+                              disabled={deletingUserId === u.id || u.id === user?.id}
+                              className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {deletingUserId === u.id ? 'Deleting…' : 'Delete User'}
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-
-            <div className="p-4 border-t border-brand-blue/10 flex flex-col sm:flex-row gap-3">
-              <select
-                value={resetUserId}
-                onChange={(e) => setResetUserId(e.target.value)}
-                className="input-field flex-1 text-sm py-2 min-w-0"
-              >
-                <option value="">Select user to reset passcode</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>{u.display_name} (@{u.username})</option>
-                ))}
-              </select>
-              <input
-                type="text"
-                maxLength={4}
-                value={newPasscode}
-                onChange={(e) => setNewPasscode(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="New 4-digit PIN"
-                className="input-field w-full sm:w-36 text-sm py-2 text-center font-mono"
-              />
-              <button onClick={handleResetPasscode} className="btn-danger text-sm py-2 px-5 shrink-0">
-                Reset Passcode
-              </button>
             </div>
           </div>
         </AdminSection>

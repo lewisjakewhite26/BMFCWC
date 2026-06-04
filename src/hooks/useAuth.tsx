@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { getAuthErrorMessage } from '../lib/authErrors'
 import { DEV_USER, DEV_ADMIN, isDevBypassEnabled, isDevBypassSession } from '../lib/devBypass'
@@ -37,6 +38,7 @@ function saveSession(user: User | null) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate()
   const [user, setUser] = useState<User | null>(loadSession)
   const [loading, setLoading] = useState(true)
 
@@ -116,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     saveSession(null)
     setUser(null)
+    navigate('/', { replace: true })
   }
 
   const devBypassLogin = (asAdmin = false) => {
