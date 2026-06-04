@@ -30,7 +30,7 @@ export function PicksProgressBar({ lockedCount, total }: PicksProgressBarProps) 
   return (
     <div className="space-y-2 px-1">
       <div className="flex items-center justify-between text-sm text-gray-500">
-        <span>Locked in</span>
+        <span>Submitted</span>
         <span className="font-mono font-medium text-brand-navy">
           {lockedCount}/{total}
         </span>
@@ -64,7 +64,7 @@ export function PicksProgressBar({ lockedCount, total }: PicksProgressBarProps) 
             role="status"
             aria-live="polite"
           >
-            All predictions in for this matchday
+            All predictions submitted for this matchday
           </motion.p>
         )}
       </AnimatePresence>

@@ -142,7 +142,7 @@ export function DashboardStatusBanner({
   } else if (total === 0) {
     statusLine = 'Fixtures loading…'
   } else {
-    statusLine = `${lockedCount} of ${total} picks locked in`
+    statusLine = `${lockedCount} of ${total} predictions submitted`
   }
 
   return (

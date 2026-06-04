@@ -256,7 +256,7 @@ export default function Admin() {
         <section>
           <h2 className="font-display text-xl text-brand-navy mb-1">Predictions Audit</h2>
           <p className="text-sm text-gray-500 mb-4">
-            Every player&apos;s picks, actual results, and points — filter by matchday or player.
+            Every player&apos;s predictions, actual results, and points — filter by matchday or player.
           </p>
           <ErrorBoundary>
             <AdminPredictionsAudit

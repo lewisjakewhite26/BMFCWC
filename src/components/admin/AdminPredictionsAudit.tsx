@@ -126,7 +126,7 @@ export function AdminPredictionsAudit({ gameDays, users, devMode = false }: Admi
 
         <div className="flex flex-wrap gap-3 text-sm">
           <span className="rounded-xl bg-white/50 border border-brand-blue/10 px-3 py-1.5 text-gray-600">
-            <span className="font-mono font-bold text-brand-navy">{summary.count}</span> picks
+            <span className="font-mono font-bold text-brand-navy">{summary.count}</span> predictions
           </span>
           <span className="rounded-xl bg-white/50 border border-brand-blue/10 px-3 py-1.5 text-gray-600">
             <span className="font-mono font-bold text-brand-navy">{summary.scored}</span> scored
@@ -138,7 +138,7 @@ export function AdminPredictionsAudit({ gameDays, users, devMode = false }: Admi
       </div>
 
       {loading ? (
-        <div className="p-8 text-center text-gray-500 text-sm animate-pulse">Loading picks…</div>
+        <div className="p-8 text-center text-gray-500 text-sm animate-pulse">Loading predictions…</div>
       ) : rows.length === 0 ? (
         <div className="p-8 text-center text-gray-500 text-sm">
           {devMode ? 'Predictions audit (preview only — no data in dev bypass)' : 'No predictions match these filters'}
@@ -151,7 +151,7 @@ export function AdminPredictionsAudit({ gameDays, users, devMode = false }: Admi
                 <th className="text-left p-3 font-medium">Player</th>
                 <th className="text-left p-3 font-medium">MD</th>
                 <th className="text-left p-3 font-medium">Match</th>
-                <th className="text-center p-3 font-medium">Pick</th>
+                <th className="text-center p-3 font-medium">Prediction</th>
                 <th className="text-center p-3 font-medium">Actual</th>
                 <th className="text-center p-3 font-medium">Pts</th>
               </tr>

@@ -336,7 +336,7 @@ const HOW_IT_WORKS = [
   },
   {
     icon: '🔒',
-    title: 'Confirm your picks',
+    title: 'Confirm your predictions',
     body: 'Submit your predictions before the match starts. Once it kicks off, they\'re locked.',
   },
   {
@@ -437,7 +437,7 @@ export default function Landing() {
               className="text-[#6B7280] font-normal max-w-[500px] mx-auto mt-6 mb-10 leading-relaxed"
               style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)' }}
             >
-              Predict every score. Follow the tournament. See how you do.
+              Predict the scoreline for every fixture and follow your position throughout the tournament.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -494,12 +494,12 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Points system */}
+        {/* How points work */}
         <section className="px-4 pb-24 sm:pb-28">
           <div className="max-w-4xl mx-auto">
             <FadeUp>
               <h2 className="font-display text-2xl sm:text-3xl text-brand-navy text-center mb-12">
-                Points system
+                How points work
               </h2>
             </FadeUp>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

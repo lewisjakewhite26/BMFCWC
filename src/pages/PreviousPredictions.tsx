@@ -41,7 +41,7 @@ export default function PreviousPredictions() {
           <p className="text-sm sm:text-base text-gray-500">
             {user?.display_name}
             {gameDays.length > 0 && (
-              <span className="font-mono text-brand-navy"> · {totalPoints} pts scored</span>
+              <span className="font-mono text-brand-navy"> · {totalPoints} points</span>
             )}
           </p>
         </div>

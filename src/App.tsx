@@ -23,7 +23,7 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
     )
   }
 
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/" replace />
   if (adminOnly && !user.is_admin) return <Navigate to="/dashboard" replace />
 
   return <>{children}</>
