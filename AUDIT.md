@@ -26,6 +26,7 @@
 | Vercel production domain | ✅ Working |
 | Vercel env vars (`VITE_*`, service role, API-Football) | ✅ Assumed complete (site functional) |
 | `CRON_SECRET` | ✅ Likely set previously |
+| **Cron vs API quota** | ✅ **Fixed** — see [Resolved: cron quota](#resolved-cron-vs-api-quota) |
 | README (migrations, env vars, lock rules) | ✅ Updated |
 | ESLint errors (3) | ✅ Fixed |
 
@@ -39,7 +40,24 @@
 |------|--------|
 | README | Full migration list, env var table, correct matchday cutoff rules |
 | ESLint errors | Fixed — `PageBackground.tsx` hook, `CountryFlag.tsx` unused prop, `devBypass.ts` prefer-const |
-| Cron / API quota | Confirmed appropriate — see §7 (no change needed) |
+| Cron / API quota | ✅ Fixed in `vercel.json` (`*/20`) + idle skip + 80 request cap |
+
+---
+
+## Resolved: cron vs API quota
+
+**This is not an open issue.** It was flagged in audit v1 and fixed before v3.
+
+| | Before (v1 problem) | Now (fixed) |
+|---|---------------------|-------------|
+| Sync schedule | `*/15` → up to **96 cron runs/day** | `*/20` → **72 cron runs/day** (`vercel.json:4`) |
+| What counts toward 80 | Looked like every cron run might call API-Football | Only **actual HTTP requests** increment `api_request_log` |
+| Quiet days | — | **Idle skip** — no active fixtures → **0 API calls** (cron still runs, no charge) |
+| Hard stop | Could exceed provider limit in theory | App stops at **80/day** internally; your provider limit is **100/day** |
+
+The admin sync panel **requests today: X / 80** is API-Football usage, not Vercel cron invocations. A low X on a day with 72 cron log entries is correct.
+
+**Operator decision:** No further cron or cap changes needed for BMFC scale.
 
 ---
 
@@ -177,8 +195,11 @@ Scoring (10 / 5 / 0) correct in SQL and client. Matchday cutoff enforced server-
 ## 7. API Integration & Cron
 
 **Score: 78 / 100**  
-**Rating: Good**  
-*(was 62 — cron/quota confirmed appropriate for operator scale)*
+**Rating: Good — quota issue resolved**
+
+### Status: ✅ Fixed (not open)
+
+Cron schedule and API daily cap are aligned. No action required.
 
 ### How it works
 
@@ -192,10 +213,13 @@ Scoring (10 / 5 / 0) correct in SQL and client. Matchday cutoff enforced server-
 
 **Important distinction:** Admin sync panel shows **API requests consumed**, not cron invocations. Seeing 72 cron runs in Vercel logs with a low request count is correct behaviour.
 
-### Worst-case match day
-~72 sync API calls (if every 20-min window has active fixtures) + occasional progression/manual calls → capped at 80 internally, under 100 provider limit. **No change needed** — immediacy not required at BMFC scale.
+### Match-day usage (typical, not a problem)
 
-### Remaining findings
+On a busy day, sync may call API-Football several times while matches are live — well under the **80** internal cap and your **100** provider limit. Progression adds occasional extra calls during knockouts only when placeholder teams need resolving.
+
+**Not an issue:** The old audit warning about 96 runs/day exceeding 80 applied before the schedule was changed to `*/20` and before idle-skip logic was documented.
+
+### Other findings (minor)
 
 | Severity | Issue |
 |----------|-------|
@@ -320,9 +344,9 @@ Dashboard, Landing, and README describe matchday cutoff correctly. Minor: "Login
 
 ### P1 — Do before wider sharing (if any)
 
-*All previous P1 infra items complete. Nothing blocking BMFC team use.*
+*All previous P1 infra items complete — including cron/API quota. Nothing blocking BMFC team use.*
 
-1. **Smoke-test cron on a match day** — confirm Admin sync panel request count stays under 80 and results appear within ~20 minutes (or use manual sync if impatient).
+*(No open P1 items.)*
 
 ### P2 — When you have time
 
@@ -345,8 +369,8 @@ Dashboard, Landing, and README describe matchday cutoff correctly. Minor: "Login
 
 - Login rate limiting / longer passcodes
 - Server-side session invalidation on logout / passcode reset
-- Raising API daily cap above 80 (provider allows 100; current headroom sufficient)
-- Faster cron interval (20 min adequate for team scale)
+- **Cron schedule changes, raising API cap, or smoke-testing cron** — already fixed and adequate
+- Faster sync interval (20 min is fine for team scale)
 
 ---
 
