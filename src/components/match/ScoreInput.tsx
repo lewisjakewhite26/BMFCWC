@@ -1,32 +1,85 @@
+import { forwardRef, useCallback } from 'react'
+
 interface ScoreInputProps {
   value: number | ''
   onChange: (value: number | '') => void
+  onAdvance?: () => void
   disabled?: boolean
   awaiting?: boolean
 }
 
-export function ScoreInput({ value, onChange, disabled = false, awaiting = false }: ScoreInputProps) {
+export const ScoreInput = forwardRef<HTMLInputElement, ScoreInputProps>(function ScoreInput(
+  { value, onChange, onAdvance, disabled = false, awaiting = false },
+  ref
+) {
   const isEmpty = value === ''
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (disabled) return
+
+      if (e.key === 'Backspace') {
+        if (value !== '') {
+          e.preventDefault()
+          onChange('')
+        }
+        return
+      }
+
+      if (!/^\d$/.test(e.key)) return
+
+      e.preventDefault()
+      const digit = parseInt(e.key, 10)
+
+      if (value === '') {
+        onChange(digit)
+        onAdvance?.()
+        return
+      }
+
+      const combined = parseInt(`${value}${e.key}`, 10)
+      if (combined <= 99) {
+        onChange(combined)
+      }
+    },
+    [disabled, value, onChange, onAdvance]
+  )
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value.replace(/\D/g, '')
+      if (val === '') {
+        onChange('')
+        return
+      }
+
+      const num = parseInt(val.slice(0, 2), 10)
+      if (isNaN(num) || num > 99) return
+
+      const prevStr = value === '' ? '' : String(value)
+      const wasEmpty = prevStr === ''
+      onChange(num)
+
+      if (wasEmpty && val.length === 1) {
+        onAdvance?.()
+      }
+    },
+    [value, onChange, onAdvance]
+  )
 
   return (
     <input
-      type="number"
+      ref={ref}
+      type="text"
       inputMode="numeric"
       pattern="[0-9]*"
-      enterKeyHint="done"
-      min={0}
-      max={99}
-      value={value}
+      enterKeyHint="next"
+      autoComplete="off"
+      maxLength={2}
+      value={value === '' ? '' : String(value)}
       disabled={disabled}
-      onChange={(e) => {
-        const val = e.target.value
-        if (val === '') {
-          onChange('')
-        } else {
-          const num = parseInt(val, 10)
-          if (!isNaN(num) && num >= 0 && num <= 99) onChange(num)
-        }
-      }}
+      onKeyDown={handleKeyDown}
+      onChange={handleChange}
       className={`
         w-11 h-11 sm:w-16 sm:h-16 text-center text-xl sm:text-3xl font-mono font-bold rounded-xl sm:rounded-2xl
         transition-all duration-200 text-brand-navy touch-manipulation shrink-0
@@ -39,4 +92,4 @@ export function ScoreInput({ value, onChange, disabled = false, awaiting = false
       `}
     />
   )
-}
+})

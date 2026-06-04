@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { CountryFlag } from './CountryFlag'
 import { ScoreInput } from './ScoreInput'
 
@@ -34,6 +35,9 @@ export function MatchScoreLine({
   onHomeChange,
   onAwayChange,
 }: MatchScoreLineProps) {
+  const homeInputRef = useRef<HTMLInputElement>(null)
+  const awayInputRef = useRef<HTMLInputElement>(null)
+
   return (
     <div className="flex items-center gap-1 sm:gap-3 py-1">
       <div className="flex-1 min-w-[4.25rem] sm:min-w-0 overflow-hidden">
@@ -43,11 +47,22 @@ export function MatchScoreLine({
       <div className="flex items-center gap-0.5 sm:gap-1.5 shrink-0 px-0.5">
         {editable && onHomeChange && onAwayChange ? (
           <>
-            <ScoreInput value={homeScore} onChange={onHomeChange} awaiting={awaiting} />
+            <ScoreInput
+              ref={homeInputRef}
+              value={homeScore}
+              onChange={onHomeChange}
+              onAdvance={() => awayInputRef.current?.focus({ preventScroll: true })}
+              awaiting={awaiting}
+            />
             <span className={`font-light text-lg sm:text-xl select-none ${awaiting ? 'text-brand-gold/40' : 'text-gray-400'}`}>
               —
             </span>
-            <ScoreInput value={awayScore} onChange={onAwayChange} awaiting={awaiting} />
+            <ScoreInput
+              ref={awayInputRef}
+              value={awayScore}
+              onChange={onAwayChange}
+              awaiting={awaiting}
+            />
           </>
         ) : (
           <>

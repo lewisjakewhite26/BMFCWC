@@ -12,10 +12,13 @@ import { fetchOpenGameDay } from '../lib/fixtures'
 import { getGameDayCutoff } from '../lib/scoring'
 import { getTimeGreeting } from '../lib/greeting'
 import { isDevBypassSession, getMockOpenGameDay } from '../lib/devBypass'
+import { useMatchdayRecap } from '../hooks/useMatchdayRecap'
+import { MatchdayRecapModal } from '../components/dashboard/MatchdayRecapModal'
 import type { GameDay } from '../types'
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const { visible, recap, tier, queuePosition, queueTotal, dismiss } = useMatchdayRecap()
   const [openGameDay, setOpenGameDay] = useState<GameDay | null>(null)
   const [loadingDay, setLoadingDay] = useState(true)
   const [lockedFixtures, setLockedFixtures] = useState<Set<number>>(new Set())
@@ -60,12 +63,22 @@ export default function Dashboard() {
   }
 
   const lockedCount = fixtures.filter((f) => lockedFixtures.has(f.id)).length
-  const loading = loadingDay || loadingFixtures
+  const loading = loadingDay || (loadingFixtures && fixtures.length === 0)
   const cutoff = useMemo(() => getGameDayCutoff(fixtures), [fixtures])
   const hasOpenMatchday = !!openGameDay && openGameDay.status === 'open'
 
   return (
     <PageShell>
+      {visible && recap && tier && (
+        <MatchdayRecapModal
+          recap={recap}
+          tier={tier}
+          queuePosition={queuePosition}
+          queueTotal={queueTotal}
+          onDismiss={dismiss}
+        />
+      )}
+
       <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 py-5 sm:py-8 space-y-5 sm:space-y-8">
@@ -86,7 +99,7 @@ export default function Dashboard() {
             total={fixtures.length}
             cutoff={hasOpenMatchday && fixtures.length > 0 ? cutoff : null}
             hasOpenMatchday={hasOpenMatchday}
-            onExpired={reload}
+            onExpired={() => reload({ silent: true })}
           />
         )}
 
@@ -104,7 +117,7 @@ export default function Dashboard() {
               predictions={predictions}
               onSave={handleSave}
               isCurrent
-              onCutoffExpired={reload}
+              onCutoffExpired={() => reload({ silent: true })}
               onConfirmChange={handleConfirmChange}
             />
           ) : (

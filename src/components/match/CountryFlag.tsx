@@ -10,7 +10,7 @@ interface CountryFlagProps {
   card?: boolean
 }
 
-export function CountryFlag({ flag: _flag, name, size = 'md', align = 'left', card = false }: CountryFlagProps) {
+export function CountryFlag({ name, size = 'md', align = 'left', card = false }: CountryFlagProps) {
   const [imgError, setImgError] = useState(false)
   const code = getTeamFlagCode(name)
 

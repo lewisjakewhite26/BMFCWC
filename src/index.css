@@ -274,3 +274,105 @@
 .landing-scroll-hint {
   animation: landing-scroll-bounce 2s ease-in-out infinite;
 }
+
+/* Matchday recap modal — tiered celebration / commiseration */
+.recap-backdrop {
+  background: rgba(13, 27, 75, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.recap-backdrop.recap-modal-legendary {
+  background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.25) 0%, rgba(13, 27, 75, 0.65) 70%);
+}
+
+.recap-backdrop.recap-modal-great {
+  background: radial-gradient(ellipse at center, rgba(43, 95, 192, 0.2) 0%, rgba(13, 27, 75, 0.6) 70%);
+}
+
+.recap-backdrop.recap-modal-poor,
+.recap-backdrop.recap-modal-rough {
+  background: radial-gradient(ellipse at center, rgba(220, 38, 38, 0.22) 0%, rgba(13, 27, 75, 0.65) 70%);
+}
+
+.recap-modal-card.recap-modal-legendary {
+  box-shadow: 0 0 48px rgba(212, 175, 55, 0.45), 0 8px 32px rgba(13, 27, 75, 0.12);
+  border-color: rgba(212, 175, 55, 0.35);
+  animation: recap-glow-gold 2.4s ease-in-out infinite;
+}
+
+.recap-modal-card.recap-modal-great {
+  box-shadow: 0 0 36px rgba(43, 95, 192, 0.35), 0 8px 32px rgba(13, 27, 75, 0.1);
+  border-color: rgba(43, 95, 192, 0.3);
+  animation: recap-glow-blue 2.6s ease-in-out infinite;
+}
+
+.recap-modal-card.recap-modal-solid {
+  border-color: rgba(43, 95, 192, 0.2);
+}
+
+.recap-modal-card.recap-modal-poor {
+  box-shadow: 0 0 28px rgba(239, 68, 68, 0.35);
+  border-color: rgba(239, 68, 68, 0.35);
+  animation: recap-shake 0.55s ease-in-out;
+}
+
+.recap-modal-card.recap-modal-rough {
+  box-shadow: 0 0 36px rgba(220, 38, 38, 0.5);
+  border-color: rgba(220, 38, 38, 0.45);
+  animation: recap-shake 0.7s ease-in-out, recap-glow-red 1.8s ease-in-out infinite;
+}
+
+.recap-particles {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 251;
+  pointer-events: none;
+}
+
+.recap-particle {
+  position: absolute;
+  top: -2rem;
+  animation: recap-fall linear forwards;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+@keyframes recap-fall {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.6);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg) scale(1);
+    opacity: 0.15;
+  }
+}
+
+@keyframes recap-glow-gold {
+  0%, 100% { box-shadow: 0 0 36px rgba(212, 175, 55, 0.35), 0 8px 32px rgba(13, 27, 75, 0.1); }
+  50% { box-shadow: 0 0 56px rgba(212, 175, 55, 0.55), 0 8px 32px rgba(13, 27, 75, 0.12); }
+}
+
+@keyframes recap-glow-blue {
+  0%, 100% { box-shadow: 0 0 28px rgba(43, 95, 192, 0.25), 0 8px 32px rgba(13, 27, 75, 0.1); }
+  50% { box-shadow: 0 0 44px rgba(43, 95, 192, 0.4), 0 8px 32px rgba(13, 27, 75, 0.12); }
+}
+
+@keyframes recap-glow-red {
+  0%, 100% { box-shadow: 0 0 24px rgba(220, 38, 38, 0.35); }
+  50% { box-shadow: 0 0 44px rgba(220, 38, 38, 0.6); }
+}
+
+@keyframes recap-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px) rotate(-0.5deg); }
+  30% { transform: translateX(8px) rotate(0.5deg); }
+  45% { transform: translateX(-6px); }
+  60% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
+}

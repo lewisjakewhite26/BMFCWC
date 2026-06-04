@@ -12,7 +12,7 @@ export function usePredictions(gameDay: number | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: { silent?: boolean }) => {
     if (gameDay === null) {
       setFixtures([])
       setPredictions(new Map())
@@ -20,7 +20,8 @@ export function usePredictions(gameDay: number | null) {
       return
     }
 
-    setLoading(true)
+    const showLoading = !options?.silent
+    if (showLoading) setLoading(true)
     setError(null)
 
     try {
@@ -53,7 +54,7 @@ export function usePredictions(gameDay: number | null) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load predictions')
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }, [gameDay, user])
 
@@ -64,9 +65,27 @@ export function usePredictions(gameDay: number | null) {
   const submitPrediction = async (fixtureId: number, home: number, away: number) => {
     if (!user) throw new Error('You need to be signed in to view predictions')
 
+    const upsertLocal = () => {
+      setPredictions((prev) => {
+        const next = new Map(prev)
+        const existing = next.get(fixtureId)
+        next.set(fixtureId, {
+          id: existing?.id ?? crypto.randomUUID(),
+          user_id: user.id,
+          fixture_id: fixtureId,
+          predicted_home: home,
+          predicted_away: away,
+          points_awarded: existing?.points_awarded ?? 0,
+          created_at: existing?.created_at ?? new Date().toISOString(),
+        })
+        return next
+      })
+    }
+
     if (isDevBypassSession(user)) {
       upsertDevPrediction(fixtureId, home, away, user.id)
-      await load()
+      upsertLocal()
+      await load({ silent: true })
       return
     }
 
@@ -79,7 +98,8 @@ export function usePredictions(gameDay: number | null) {
     })
 
     if (error) throw error
-    await load()
+    upsertLocal()
+    await load({ silent: true })
   }
 
   return { fixtures, predictions, loading, error, submitPrediction, reload: load }

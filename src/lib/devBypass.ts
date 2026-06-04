@@ -105,7 +105,7 @@ export const MOCK_LEADERBOARD: LeaderboardEntry[] = [
 ]
 
 // In-memory store for dev prediction edits
-let devPredictions = [...MOCK_PREDICTIONS]
+const devPredictions = [...MOCK_PREDICTIONS]
 
 export function getDevPredictions(): Prediction[] {
   return devPredictions

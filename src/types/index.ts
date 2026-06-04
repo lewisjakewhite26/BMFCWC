@@ -102,6 +102,22 @@ export interface ProgressionStatus {
   queue: ProgressionQueueEntry[]
 }
 
+export interface MatchdayRecap {
+  game_day: number
+  label: string
+  matchday_points: number
+  correct_scores: number
+  correct_results: number
+  predictions_count: number
+  matchday_rank: number
+  matchday_total_players: number
+  overall_rank: number
+  overall_total_players: number
+  total_points: number
+}
+
+export type RecapTier = 'legendary' | 'great' | 'solid' | 'poor' | 'rough'
+
 export type FixtureWithPrediction = Fixture & {
   prediction?: Prediction
 }

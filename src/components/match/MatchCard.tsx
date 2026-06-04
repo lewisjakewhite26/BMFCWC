@@ -26,13 +26,16 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
   const [locking, setLocking] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastSaved = useRef({ home: prediction?.predicted_home, away: prediction?.predicted_away })
+  const userHasEdited = useRef(false)
 
   useEffect(() => {
     if (prediction) {
       setHomeScore(prediction.predicted_home)
       setAwayScore(prediction.predicted_away)
       lastSaved.current = { home: prediction.predicted_home, away: prediction.predicted_away }
-      setConfirmed(true)
+      if (!userHasEdited.current) {
+        setConfirmed(true)
+      }
     }
   }, [prediction])
 
@@ -79,11 +82,13 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
   }, [homeScore, awayScore, editable, persist])
 
   const handleHomeChange = (value: number | '') => {
+    userHasEdited.current = true
     setConfirmed(false)
     setHomeScore(value)
   }
 
   const handleAwayChange = (value: number | '') => {
+    userHasEdited.current = true
     setConfirmed(false)
     setAwayScore(value)
   }
