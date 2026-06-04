@@ -1,10 +1,20 @@
 # BMFC World Cup Predictor — Pre-Launch Audit
 
-**Audit date:** 4 June 2026 (re-run #3)  
+> **Current audit (v3)** — supersedes all earlier versions.  
+> **Last updated:** 5 June 2026 · **Commit:** `bc95b62` on `main`
+
 **Scope:** Full codebase (read-only)  
 **Operator context:** Closed BMFC team app — not a public internet product; ~10–30 trusted users, private sign-up link  
 **Build verified:** `npm run build` succeeds — 650.24 kB JS (192.79 kB gzip), 43.85 kB CSS  
 **Lint verified:** `npm run lint` — **0 errors, 3 warnings**
+
+### Audit history
+
+| Version | Date | Overall | Notes |
+|---------|------|--------:|-------|
+| v1 | 4 Jun 2026 | 54/100 | Initial audit — public-launch framing |
+| v2 | 4 Jun 2026 | 59/100 | Post P1 fixes (RLS, cron, copy) |
+| **v3 (this doc)** | **5 Jun 2026** | **68/100** | Team launch framing; migrations/env/README/cron confirmed |
 
 ---
 
@@ -350,4 +360,4 @@ If you ever opened this to the public internet, revisit security (passcode stren
 
 ---
 
-*End of audit. No code was modified during this review.*
+*End of audit v3. Reflects `main` at bc95b62 (matchday recap, scroll fix, README, ESLint fixes).*
