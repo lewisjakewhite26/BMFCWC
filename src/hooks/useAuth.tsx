@@ -1,0 +1,124 @@
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { supabase } from '../lib/supabase'
+import { DEV_USER, DEV_ADMIN, isDevBypassEnabled, isDevBypassSession } from '../lib/devBypass'
+import type { User } from '../types'
+
+const STORAGE_KEY = 'bmfc_session'
+
+interface AuthContextType {
+  user: User | null
+  loading: boolean
+  login: (username: string, passcode: string) => Promise<void>
+  signup: (username: string, displayName: string, passcode: string) => Promise<void>
+  devBypassLogin: (asAdmin?: boolean) => void
+  logout: () => void
+  refreshUser: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextType | null>(null)
+
+function loadSession(): User | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return null
+    return JSON.parse(stored) as User
+  } catch {
+    return null
+  }
+}
+
+function saveSession(user: User | null) {
+  if (user) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
+  } else {
+    localStorage.removeItem(STORAGE_KEY)
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(loadSession)
+  const [loading, setLoading] = useState(true)
+
+  const refreshUser = useCallback(async () => {
+    const session = loadSession()
+    if (!session) {
+      setUser(null)
+      return
+    }
+
+    if (isDevBypassSession(session)) {
+      setUser(session)
+      return
+    }
+
+    const { data, error } = await supabase.rpc('get_session_user', {
+      p_user_id: session.id,
+      p_session_token: session.session_token,
+    })
+
+    if (error || !data) {
+      saveSession(null)
+      setUser(null)
+      return
+    }
+
+    const updated = data as User
+    saveSession(updated)
+    setUser(updated)
+  }, [])
+
+  useEffect(() => {
+    refreshUser().finally(() => setLoading(false))
+  }, [refreshUser])
+
+  const login = async (username: string, passcode: string) => {
+    const { data, error } = await supabase.rpc('login_user', {
+      p_username: username,
+      p_passcode: passcode,
+    })
+
+    if (error) throw error
+
+    const userData = data as User
+    saveSession(userData)
+    setUser(userData)
+  }
+
+  const signup = async (username: string, displayName: string, passcode: string) => {
+    const { data, error } = await supabase.rpc('register_user', {
+      p_username: username,
+      p_display_name: displayName,
+      p_passcode: passcode,
+    })
+
+    if (error) throw error
+
+    const userData = data as User
+    saveSession(userData)
+    setUser(userData)
+  }
+
+  const logout = () => {
+    saveSession(null)
+    setUser(null)
+  }
+
+  const devBypassLogin = (asAdmin = false) => {
+    if (!isDevBypassEnabled()) return
+    const devUser = asAdmin ? DEV_ADMIN : DEV_USER
+    saveSession(devUser)
+    setUser(devUser)
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, signup, devBypassLogin, logout, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  return ctx
+}

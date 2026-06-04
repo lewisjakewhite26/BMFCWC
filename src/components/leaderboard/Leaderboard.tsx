@@ -1,0 +1,147 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useSpring, useTransform } from 'framer-motion'
+import { LeaderboardSkeleton } from '../ui/Skeleton'
+import type { LeaderboardEntry } from '../../types'
+
+function AnimatedPoints({ value }: { value: number }) {
+  const spring = useSpring(value, { stiffness: 80, damping: 20 })
+  const display = useTransform(spring, (v) => Math.round(v).toString())
+  const [text, setText] = useState(String(value))
+
+  useEffect(() => {
+    spring.set(value)
+    return display.on('change', (v) => setText(v))
+  }, [value, spring, display])
+
+  return <span className="font-mono tabular-nums">{text}</span>
+}
+
+function Podium({ entries }: { entries: LeaderboardEntry[] }) {
+  const top3 = entries.slice(0, 3)
+  if (top3.length === 0) return null
+
+  const order = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3
+  const maxPoints = Math.max(...top3.map((e) => e.total_points), 1)
+  const minBar = 56
+  const maxBar = 112
+
+  const medals = ['🥈', '🥇', '🥉']
+  const bg = ['bg-gray-200', 'bg-brand-gold/25', 'bg-amber-700/15']
+
+  return (
+    <div className="flex items-end justify-center gap-3 sm:gap-6 mb-6 sm:mb-8 px-2">
+      {order.map((entry, i) => {
+        const rank = entries.indexOf(entry) + 1
+        const medal = top3.length >= 3 ? medals[i] : medals[rank - 1] ?? String(rank)
+        const bgClass = top3.length >= 3 ? bg[i] : bg[rank - 1] ?? 'bg-gray-100'
+        const barHeight = minBar + (entry.total_points / maxPoints) * (maxBar - minBar)
+
+        return (
+          <div key={entry.id} className="flex flex-col items-center flex-1 max-w-[120px]">
+            <span className="text-2xl mb-1">{medal}</span>
+            <p className="text-xs sm:text-sm font-semibold text-brand-navy text-center truncate w-full px-1">
+              {entry.display_name}
+            </p>
+            <p className="text-xs font-mono text-brand-blue font-bold mb-2">{entry.total_points} pts</p>
+            <div
+              className={`w-full ${bgClass} rounded-t-2xl border border-brand-blue/10 transition-all duration-500`}
+              style={{ height: `${barHeight}px` }}
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+interface LeaderboardRowProps {
+  entry: LeaderboardEntry
+  rank: number
+  isCurrentUser?: boolean
+}
+
+export function LeaderboardRow({ entry, rank, isCurrentUser }: LeaderboardRowProps) {
+  return (
+    <div
+      className={`
+        flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border transition-all
+        ${isCurrentUser ? 'bg-brand-blue/8 border-brand-blue/25' : 'bg-white/50 border-brand-blue/10'}
+      `}
+    >
+      <span className="w-8 text-center font-mono font-bold text-gray-500 text-sm">{rank}</span>
+      <span className="flex-1 font-semibold text-brand-navy truncate">{entry.display_name}</span>
+      <span className="hidden sm:block text-sm text-gray-500 w-14 text-center font-mono">{entry.correct_scores}</span>
+      <span className="hidden sm:block text-sm text-gray-500 w-14 text-center font-mono">{entry.correct_results}</span>
+      <span className="font-bold text-brand-blue w-14 text-right">
+        <AnimatedPoints value={entry.total_points} />
+      </span>
+    </div>
+  )
+}
+
+interface LeaderboardProps {
+  entries: LeaderboardEntry[]
+  loading: boolean
+  currentUserId?: string
+  compact?: boolean
+}
+
+export function Leaderboard({ entries, loading, currentUserId, compact = false }: LeaderboardProps) {
+  if (loading) return <LeaderboardSkeleton />
+
+  if (entries.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        No predictions yet. Sign up to take part.
+      </div>
+    )
+  }
+
+  const tableEntries = compact ? entries : entries.slice(3)
+  const showPodium = !compact && entries.length >= 1
+
+  return (
+    <div className="space-y-2">
+      {showPodium && <Podium entries={entries} />}
+
+      {!compact && entries.length > 3 && (
+        <div className="flex items-center gap-3 sm:gap-4 px-4 py-2 text-xs text-gray-500 uppercase tracking-wider font-medium">
+          <span className="w-8 text-center">Rank</span>
+          <span className="flex-1">Name</span>
+          <span className="hidden sm:block w-14 text-center">Exact</span>
+          <span className="hidden sm:block w-14 text-center">Result</span>
+          <span className="w-14 text-right">Pts</span>
+        </div>
+      )}
+
+      {compact && (
+        <div className="flex items-center gap-3 px-2 py-1 text-xs text-gray-500 uppercase tracking-wider font-medium">
+          <span className="w-8 text-center">#</span>
+          <span className="flex-1">Name</span>
+          <span className="w-14 text-right">Pts</span>
+        </div>
+      )}
+
+      {(compact ? entries : tableEntries).map((entry, i) => {
+        const rank = compact ? i + 1 : i + 4
+        return (
+          <LeaderboardRow
+            key={entry.id}
+            entry={entry}
+            rank={rank}
+            isCurrentUser={entry.id === currentUserId}
+          />
+        )
+      })}
+
+      {compact && (
+        <p className="text-center pt-2">
+          <Link to="/signup" className="text-sm text-brand-blue font-medium hover:underline">
+            Sign up to take part →
+          </Link>
+        </p>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans text-[#374151] antialiased;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4 {
+    @apply text-brand-navy font-display;
+  }
+}
+
+@layer components {
+  .page-bg {
+    background: linear-gradient(135deg, #F0F4FF 0%, #E8EEFF 100%);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(43, 95, 192, 0.15);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(13, 27, 75, 0.08);
+  }
+
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(43, 95, 192, 0.12);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 min-h-[48px] rounded-pill font-semibold text-white bg-brand-blue transition-all duration-200 touch-manipulation;
+    box-shadow: 0 4px 16px rgba(43, 95, 192, 0.25);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(43, 95, 192, 0.3);
+  }
+
+  @media (hover: none) {
+    .btn-primary:hover:not(:disabled) {
+      transform: none;
+    }
+  }
+
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-pill font-semibold text-brand-blue bg-white/65 border border-brand-blue/30 transition-all duration-200;
+    backdrop-filter: blur(12px);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(13, 27, 75, 0.08);
+    @apply bg-white/80;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-pill font-semibold text-red-600 bg-red-50 border border-red-200 transition-all duration-200;
+  }
+
+  @keyframes picks-progress-shimmer {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.12); }
+  }
+
+  .picks-progress-shimmer {
+    animation: picks-progress-shimmer 1.4s ease-in-out 2;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    transform: translateY(-1px);
+    @apply bg-red-100;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-2xl bg-white/80 border border-brand-blue/15 text-brand-navy placeholder:text-gray-400 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all;
+  }
+
+  .nav-link {
+    @apply text-sm font-medium text-brand-navy hover:text-brand-blue transition-colors;
+  }
+
+  .nav-link-active {
+    @apply text-brand-blue relative;
+  }
+
+  .nav-link-active::after {
+    content: '';
+    @apply absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-blue rounded-full;
+  }
+
+  .points-badge-gold {
+    @apply bg-brand-gold text-white font-semibold rounded-pill px-3 py-1 text-xs;
+  }
+
+  .stat-value {
+    @apply font-mono tabular-nums;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.pin-shake {
+  animation: pin-shake 0.4s ease-in-out;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f0f4ff;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(43, 95, 192, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2B5FC0;
+}
+
+.page-enter {
+  animation: fade-in 200ms ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes landing-scroll-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(6px); opacity: 0.85; }
+}
+
+.landing-scroll-hint {
+  animation: landing-scroll-bounce 2s ease-in-out infinite;
+}
