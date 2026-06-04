@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useOpenMatchdayNumber } from '../../hooks/useOpenMatchdayNumber'
+import { PaymentStatusIndicator } from './PaymentStatusIndicator'
 
 function NavIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -54,6 +56,7 @@ const tabs = [
 export function MobileBottomNav() {
   const location = useLocation()
   const { user, logout } = useAuth()
+  const openMatchday = useOpenMatchdayNumber()
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -92,8 +95,15 @@ export function MobileBottomNav() {
       >
         <div className="glass-card p-4 space-y-1 shadow-glass-hover border border-brand-blue/15">
           <div className="px-2 pb-3 mb-2 border-b border-brand-blue/10">
-            <p className="font-semibold text-brand-navy">{user.display_name}</p>
-            <p className="text-sm font-mono text-brand-blue font-bold">{user.total_points} pts</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-semibold text-brand-navy">{user.display_name}</p>
+              <PaymentStatusIndicator
+                hasPaid={user.has_paid ?? false}
+                matchdayNumber={openMatchday}
+                username={user.username}
+              />
+            </div>
+            <p className="text-sm font-mono text-brand-blue font-bold mt-0.5">{user.total_points} pts</p>
           </div>
           {user.is_admin && (
             <Link

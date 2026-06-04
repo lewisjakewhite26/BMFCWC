@@ -156,6 +156,46 @@
   .touch-manipulation {
     touch-action: manipulation;
   }
+
+  .payment-indicator-subtle {
+    font-size: 1.125rem;
+    opacity: 0.85;
+    border-radius: 9999px;
+    padding: 0.125rem 0.375rem;
+    animation: paymentPulseSubtle 2.5s ease-in-out infinite;
+  }
+
+  .payment-indicator-moderate {
+    font-size: 1.375rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.375rem;
+    animation: paymentPulseModerate 1.5s ease-in-out infinite;
+  }
+
+  .payment-indicator-urgent {
+    font-size: 1.5rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.375rem;
+    animation: paymentPulseUrgent 0.8s ease-in-out infinite, paymentShake 0.8s ease-in-out infinite;
+  }
+
+  .payment-indicator-critical {
+    border-radius: 9999px;
+    animation: paymentPulseCritical 0.5s ease-in-out infinite, paymentShake 0.5s ease-in-out infinite;
+  }
+
+  .payment-indicator-critical-label {
+    display: inline-block;
+    background: #ef4444;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    padding: 0.3125rem 0.625rem;
+    border-radius: 9999px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
 }
 
 @keyframes gradient-shift {
@@ -169,6 +209,34 @@
   40% { transform: translateX(6px); }
   60% { transform: translateX(-4px); }
   80% { transform: translateX(4px); }
+}
+
+@keyframes paymentPulseSubtle {
+  0%, 100% { opacity: 0.85; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+  50% { opacity: 0.55; box-shadow: none; }
+}
+
+@keyframes paymentPulseModerate {
+  0%, 100% { opacity: 1; box-shadow: 0 0 14px rgba(239, 68, 68, 0.6); }
+  50% { opacity: 0.65; box-shadow: none; }
+}
+
+@keyframes paymentPulseUrgent {
+  0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
+  50% { opacity: 0.7; box-shadow: none; }
+}
+
+@keyframes paymentPulseCritical {
+  0%, 100% { opacity: 1; box-shadow: 0 0 28px rgba(239, 68, 68, 1); }
+  50% { opacity: 0.85; box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); }
+}
+
+@keyframes paymentShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
 }
 
 .pin-shake {

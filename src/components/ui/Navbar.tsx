@@ -1,6 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useOpenMatchdayNumber } from '../../hooks/useOpenMatchdayNumber'
 import { PointsTotal } from './PointsTotal'
+import { PaymentStatusIndicator } from './PaymentStatusIndicator'
 
 interface NavbarProps {
   displayName?: string
@@ -22,6 +24,7 @@ export function Navbar({ displayName: propDisplayName, totalPoints: propPoints }
 
   const displayName = propDisplayName ?? authUser?.display_name
   const totalPoints = propPoints ?? authUser?.total_points
+  const openMatchday = useOpenMatchdayNumber()
 
   const isActive = (path: string) => location.pathname === path
 
@@ -61,6 +64,13 @@ export function Navbar({ displayName: propDisplayName, totalPoints: propPoints }
               <div className="flex items-center gap-2.5">
                 <span className="text-sm text-gray-600">{displayName}</span>
                 <PointsTotal points={totalPoints ?? 0} />
+                {authUser && (
+                  <PaymentStatusIndicator
+                    hasPaid={authUser.has_paid ?? false}
+                    matchdayNumber={openMatchday}
+                    username={authUser.username}
+                  />
+                )}
               </div>
               {authUser?.is_admin && (
                 <Link

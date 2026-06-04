@@ -13,6 +13,7 @@ export interface User {
   display_name: string
   is_admin: boolean
   total_points: number
+  has_paid: boolean
   session_token: string
 }
 

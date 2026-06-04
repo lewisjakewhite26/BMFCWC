@@ -8,6 +8,7 @@ export const DEV_USER: User = {
   display_name: 'Preview Player',
   is_admin: false,
   total_points: 45,
+  has_paid: false,
   session_token: DEV_BYPASS_TOKEN,
 }
 
@@ -17,6 +18,7 @@ export const DEV_ADMIN: User = {
   display_name: 'Preview Admin',
   is_admin: true,
   total_points: 120,
+  has_paid: true,
   session_token: DEV_BYPASS_TOKEN,
 }
 
