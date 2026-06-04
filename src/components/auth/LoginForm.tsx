@@ -44,8 +44,8 @@ export function LoginForm() {
           className="h-20 w-20 mx-auto mb-4 object-contain drop-shadow-md"
           onError={(e) => { (e.target as HTMLImageElement).src = '/logo.svg' }}
         />
-        <h1 className="font-display text-2xl text-brand-navy">Back in the dugout</h1>
-        <p className="text-gray-500 text-sm mt-1">Sign in to enter your predictions</p>
+        <h1 className="font-display text-2xl text-brand-navy">Welcome back</h1>
+        <p className="text-gray-500 text-sm mt-1">Sign in to your account</p>
       </div>
 
       <div>

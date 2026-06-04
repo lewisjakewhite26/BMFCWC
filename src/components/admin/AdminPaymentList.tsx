@@ -17,7 +17,7 @@ export function AdminPaymentList({
   const paidCount = users.filter((u) => u.has_paid).length
 
   return (
-    <div className="glass-card overflow-hidden">
+    <div className="overflow-hidden min-w-0">
       <div className="px-4 sm:px-5 py-4 border-b border-brand-blue/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <p className="text-sm text-gray-600">
           <span className="font-mono font-bold text-brand-navy">{paidCount}</span>

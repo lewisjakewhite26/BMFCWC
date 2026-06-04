@@ -8,6 +8,7 @@ import { SyncStatusCard } from '../components/admin/SyncStatusCard'
 import { ProgressionStatusCard } from '../components/admin/ProgressionStatusCard'
 import { AdminPredictionsAudit } from '../components/admin/AdminPredictionsAudit'
 import { AdminPaymentList, toggleUserPaid } from '../components/admin/AdminPaymentList'
+import { AdminSection } from '../components/admin/AdminSection'
 import { KnockoutFixtureEditor } from '../components/admin/KnockoutFixtureEditor'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { ErrorBoundary } from '../components/ui/ErrorBoundary'
@@ -171,27 +172,24 @@ export default function Admin() {
     <PageShell>
       <Navbar />
 
-      <div className="max-w-4xl mx-auto px-4 py-5 sm:py-8 space-y-8 sm:space-y-10">
-        <div>
+      <div className="max-w-4xl mx-auto px-4 py-5 sm:py-8 overflow-x-hidden">
+        <div className="mb-8">
           <h1 className="font-display text-2xl sm:text-3xl text-brand-navy">Admin</h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">Manage matchdays, sync results, and users</p>
         </div>
 
-        <section>
-          <h2 className="font-display text-xl text-brand-navy mb-4">API Sync</h2>
+        <AdminSection title="API Sync">
           <SyncStatusCard devMode={!!isDev} />
-        </section>
+        </AdminSection>
 
-        <section>
-          <h2 className="font-display text-xl text-brand-navy mb-4">Auto Progression</h2>
+        <AdminSection title="Auto Progression">
           <ProgressionStatusCard devMode={!!isDev} />
-        </section>
+        </AdminSection>
 
-        <section>
-          <h2 className="font-display text-xl text-brand-navy mb-1">Knockout Fixture Editor</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Update placeholder team names once knockout opponents are confirmed (Matchdays 4–8).
-          </p>
+        <AdminSection
+          title="Knockout Fixture Editor"
+          description="Update placeholder team names once knockout opponents are confirmed (Matchdays 4–8)."
+        >
           <ErrorBoundary>
             {loading ? (
               <TableSkeleton rows={3} />
@@ -199,10 +197,9 @@ export default function Admin() {
               <KnockoutFixtureEditor fixtures={fixtures} devMode={!!isDev} onSaved={load} />
             )}
           </ErrorBoundary>
-        </section>
+        </AdminSection>
 
-        <section>
-          <h2 className="font-display text-xl text-brand-navy mb-4">Matchday Manager</h2>
+        <AdminSection title="Matchday Manager">
           <ErrorBoundary>
             {loading ? (
               <TableSkeleton rows={4} />
@@ -215,11 +212,11 @@ export default function Admin() {
               />
             )}
           </ErrorBoundary>
-        </section>
+        </AdminSection>
 
-        <section>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 className="font-display text-xl text-brand-navy">Manual Result Entry</h2>
+        <AdminSection
+          title="Manual Result Entry"
+          headerExtra={
             <select
               value={selectedGameDay}
               onChange={(e) => setSelectedGameDay(e.target.value === 'all' ? 'all' : Number(e.target.value))}
@@ -230,17 +227,17 @@ export default function Admin() {
                 <option key={gd.id} value={gd.game_day}>{gd.label.replace(/Game Day/gi, 'Matchday')}</option>
               ))}
             </select>
-          </div>
-
+          }
+        >
           <ErrorBoundary>
             {loading ? (
               <TableSkeleton rows={5} />
             ) : filteredFixtures.length === 0 ? (
-              <div className="glass-card p-6 text-center text-gray-500">
+              <div className="admin-inner-card p-6 text-center text-gray-500">
                 All fixtures have results entered
               </div>
             ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-[600px] overflow-y-auto overflow-x-hidden pr-1">
                 {filteredFixtures.map((fixture) => (
                   <AdminFixtureRow
                     key={fixture.id}
@@ -251,13 +248,12 @@ export default function Admin() {
               </div>
             )}
           </ErrorBoundary>
-        </section>
+        </AdminSection>
 
-        <section>
-          <h2 className="font-display text-xl text-brand-navy mb-1">Predictions Audit</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Every player&apos;s predictions, actual results, and points — filter by matchday or player.
-          </p>
+        <AdminSection
+          title="Predictions Audit"
+          description="Every player's predictions, actual results, and points — filter by matchday or player."
+        >
           <ErrorBoundary>
             <AdminPredictionsAudit
               gameDays={gameDays}
@@ -265,26 +261,24 @@ export default function Admin() {
               devMode={!!isDev}
             />
           </ErrorBoundary>
-        </section>
+        </AdminSection>
 
-        <section>
-          <h2 className="font-display text-xl text-brand-navy mb-1">Entry Fees</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            All sign-ups — tick each player when you&apos;ve received their cash payment.
-          </p>
+        <AdminSection
+          title="Entry Fees"
+          description="All sign-ups — tick each player when you've received their cash payment."
+        >
           <AdminPaymentList
             users={users}
             devMode={!!isDev}
             onTogglePaid={handleTogglePaid}
             togglingId={togglingPaidId}
           />
-        </section>
+        </AdminSection>
 
-        <section>
-          <h2 className="font-display text-xl text-brand-navy mb-4">User Manager</h2>
-          <div className="glass-card overflow-hidden">
+        <AdminSection title="User Manager">
+          <div className="overflow-hidden min-w-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[480px]">
                 <thead>
                   <tr className="border-b border-brand-blue/10 text-gray-500 uppercase text-xs">
                     <th className="text-left p-4 font-medium">Username</th>
@@ -308,7 +302,7 @@ export default function Admin() {
               <select
                 value={resetUserId}
                 onChange={(e) => setResetUserId(e.target.value)}
-                className="input-field flex-1 text-sm py-2"
+                className="input-field flex-1 text-sm py-2 min-w-0"
               >
                 <option value="">Select user to reset passcode</option>
                 {users.map((u) => (
@@ -328,7 +322,7 @@ export default function Admin() {
               </button>
             </div>
           </div>
-        </section>
+        </AdminSection>
       </div>
     </PageShell>
   )

@@ -77,7 +77,7 @@ export function SignupForm() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="input-field"
-          placeholder="3-20 characters"
+          placeholder="Choose a username"
           required
         />
       </div>

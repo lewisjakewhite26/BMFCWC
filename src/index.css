@@ -43,6 +43,33 @@
     border-bottom: 1px solid rgba(43, 95, 192, 0.12);
   }
 
+  .admin-section {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(43, 95, 192, 0.15);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(13, 27, 75, 0.08);
+    @apply p-4 sm:p-6 mb-8 pb-8 border-b border-brand-blue/10 last:mb-0 last:border-b-0 last:pb-6;
+  }
+
+  .admin-section-heading {
+    @apply flex items-stretch gap-3 text-lg font-semibold text-brand-navy;
+  }
+
+  .admin-section-heading-accent {
+    @apply w-1 shrink-0 rounded-sm bg-brand-blue;
+  }
+
+  .admin-inner-card {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(43, 95, 192, 0.15);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(13, 27, 75, 0.08);
+  }
+
   .btn-primary {
     @apply inline-flex items-center justify-center px-6 py-3 min-h-[48px] rounded-pill font-semibold text-white bg-brand-blue transition-all duration-200 touch-manipulation;
     box-shadow: 0 4px 16px rgba(43, 95, 192, 0.25);

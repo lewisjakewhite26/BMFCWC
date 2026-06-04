@@ -17,6 +17,33 @@ function AnimatedPoints({ value }: { value: number }) {
   return <span className="font-mono tabular-nums">{text}</span>
 }
 
+function RankBadge({ rank }: { rank: number }) {
+  const styles: Record<number, string> = {
+    1: 'bg-[#D4A017] text-white',
+    2: 'bg-[#9CA3AF] text-white',
+    3: 'bg-[#B87333] text-white',
+  }
+
+  const badgeClass = styles[rank]
+  if (!badgeClass) {
+    return <span className="text-sm font-mono font-bold text-gray-500">{rank}</span>
+  }
+
+  return (
+    <span
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold font-mono ${badgeClass}`}
+    >
+      {rank}
+    </span>
+  )
+}
+
+const PODIUM_GRADIENTS: Record<number, string> = {
+  1: 'linear-gradient(to bottom, #D4A017, #FDE68A)',
+  2: 'linear-gradient(to bottom, #9CA3AF, #E5E7EB)',
+  3: 'linear-gradient(to bottom, #B87333, #D4A57A)',
+}
+
 function Podium({ entries }: { entries: LeaderboardEntry[] }) {
   const top3 = entries.slice(0, 3)
   if (top3.length === 0) return null
@@ -26,27 +53,29 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
   const minBar = 56
   const maxBar = 112
 
-  const medals = ['🥈', '🥇', '🥉']
-  const bg = ['bg-gray-200', 'bg-brand-gold/25', 'bg-amber-700/15']
-
   return (
     <div className="flex items-end justify-center gap-3 sm:gap-6 mb-6 sm:mb-8 px-2">
-      {order.map((entry, i) => {
+      {order.map((entry) => {
         const rank = entries.indexOf(entry) + 1
-        const medal = top3.length >= 3 ? medals[i] : medals[rank - 1] ?? String(rank)
-        const bgClass = top3.length >= 3 ? bg[i] : bg[rank - 1] ?? 'bg-gray-100'
         const barHeight = minBar + (entry.total_points / maxPoints) * (maxBar - minBar)
+        const gradient = PODIUM_GRADIENTS[rank]
 
         return (
           <div key={entry.id} className="flex flex-col items-center flex-1 max-w-[120px]">
-            <span className="text-2xl mb-1">{medal}</span>
+            <div className="mb-1">
+              <RankBadge rank={rank} />
+            </div>
             <p className="text-xs sm:text-sm font-semibold text-brand-navy text-center truncate w-full px-1">
               {entry.display_name}
             </p>
             <p className="text-xs font-mono text-brand-blue font-bold mb-2">{entry.total_points} pts</p>
             <div
-              className={`w-full ${bgClass} rounded-t-2xl border border-brand-blue/10 transition-all duration-500`}
-              style={{ height: `${barHeight}px` }}
+              className="w-full rounded-t-2xl border border-brand-blue/10 transition-all duration-500"
+              style={{
+                height: `${barHeight}px`,
+                background: gradient ?? '#E5E7EB',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              }}
             />
           </div>
         )

@@ -20,7 +20,7 @@ export function KnockoutFixtureEditor({ fixtures, devMode = false, onSaved }: Kn
 
   if (knockoutFixtures.length === 0) {
     return (
-      <div className="glass-card p-6 text-center text-gray-500 text-sm">
+      <div className="admin-inner-card p-6 text-center text-gray-500 text-sm">
         No upcoming knockout placeholders to edit.
       </div>
     )
@@ -100,7 +100,7 @@ function KnockoutFixtureRow({
   }
 
   return (
-    <div className="glass-card p-4 space-y-3">
+    <div className="admin-inner-card p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
           Matchday {fixture.game_day} · {fixture.stage.replace(/_/g, ' ')}

@@ -143,7 +143,7 @@ export function SyncStatusCard({ devMode = false }: SyncStatusCardProps) {
 
   if (loading) {
     return (
-      <div className="glass-card p-6 animate-pulse">
+      <div className="animate-pulse space-y-4">
         <div className="h-5 bg-gray-200 rounded w-40 mb-4" />
         <div className="h-3 bg-gray-100 rounded w-full mb-2" />
         <div className="h-10 bg-gray-100 rounded w-full" />
@@ -156,7 +156,7 @@ export function SyncStatusCard({ devMode = false }: SyncStatusCardProps) {
   const barColor = count > 60 ? 'bg-brand-gold' : 'bg-brand-blue'
 
   return (
-    <div className="glass-card p-4 sm:p-6 space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h3 className="font-display text-lg text-brand-navy">API Sync Status</h3>

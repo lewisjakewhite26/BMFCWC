@@ -171,7 +171,7 @@ export function ProgressionStatusCard({ devMode = false }: ProgressionStatusCard
 
   if (loading) {
     return (
-      <div className="glass-card p-6 animate-pulse">
+      <div className="animate-pulse space-y-4">
         <div className="h-5 bg-gray-200 rounded w-48 mb-4" />
         <div className="h-3 bg-gray-100 rounded w-full mb-2" />
         <div className="h-24 bg-gray-100 rounded w-full" />
@@ -183,7 +183,7 @@ export function ProgressionStatusCard({ devMode = false }: ProgressionStatusCard
   const queue = status?.queue ?? []
 
   return (
-    <div className="glass-card p-4 sm:p-6 space-y-5">
+    <div className="space-y-5">
       <div>
         <h3 className="font-display text-lg text-brand-navy">Auto Progression</h3>
         <p className="text-sm text-gray-500 mt-0.5">

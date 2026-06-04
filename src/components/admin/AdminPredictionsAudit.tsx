@@ -83,7 +83,7 @@ export function AdminPredictionsAudit({ gameDays, users, devMode = false }: Admi
   }, [rows])
 
   return (
-    <div className="glass-card overflow-hidden">
+    <div className="overflow-hidden min-w-0">
       <div className="p-4 sm:p-5 border-b border-brand-blue/10 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end gap-3">
           <div className="flex-1">

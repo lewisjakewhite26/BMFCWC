@@ -44,7 +44,7 @@ export function GameDayManager({ gameDays, onOpen, onComplete, incompleteFixture
         const label = gd.label.replace(/Game Day/gi, 'Matchday')
 
         return (
-          <div key={gd.id} className="glass-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div key={gd.id} className="admin-inner-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-display text-brand-navy">{label}</span>

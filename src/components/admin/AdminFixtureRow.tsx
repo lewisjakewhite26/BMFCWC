@@ -35,7 +35,7 @@ export function AdminFixtureRow({ fixture, onSubmitResult }: AdminFixtureRowProp
   }
 
   return (
-    <div className={`glass-card p-4 flex flex-col sm:flex-row sm:items-center gap-4 ${hasResult ? 'ring-1 ring-emerald-300/50' : ''}`}>
+    <div className={`admin-inner-card p-4 flex flex-col sm:flex-row sm:items-center gap-4 min-w-0 ${hasResult ? 'ring-1 ring-emerald-300/50' : ''}`}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <CountryFlag flag={fixture.home_flag} name={fixture.home_team} size="sm" />
