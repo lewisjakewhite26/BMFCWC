@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from './supabaseAdmin'
+import { getSupabaseAdmin } from './supabaseAdmin.js'
 
 const MAX_DAILY_REQUESTS = 80
 const RETRY_MINUTES = 30

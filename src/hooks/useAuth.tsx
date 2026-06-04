@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { getAuthErrorMessage } from '../lib/authErrors'
 import { DEV_USER, DEV_ADMIN, isDevBypassEnabled, isDevBypassSession } from '../lib/devBypass'
 import type { User } from '../types'
 
@@ -72,12 +73,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshUser])
 
   const login = async (username: string, passcode: string) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Sign-in is unavailable — Supabase is not configured for this deployment.')
+    }
+
     const { data, error } = await supabase.rpc('login_user', {
       p_username: username,
       p_passcode: passcode,
     })
 
-    if (error) throw error
+    if (error) {
+      throw new Error(getAuthErrorMessage(error, 'Invalid username or passcode'))
+    }
+    if (!data) throw new Error('Invalid username or passcode')
 
     const userData = data as User
     saveSession(userData)
@@ -85,13 +93,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signup = async (username: string, displayName: string, passcode: string) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Sign-up is unavailable — Supabase is not configured for this deployment.')
+    }
+
     const { data, error } = await supabase.rpc('register_user', {
       p_username: username,
       p_display_name: displayName,
       p_passcode: passcode,
     })
 
-    if (error) throw error
+    if (error) {
+      throw new Error(getAuthErrorMessage(error, 'Signup failed'))
+    }
+    if (!data) throw new Error('Signup failed — no account was returned')
 
     const userData = data as User
     saveSession(userData)

@@ -36,16 +36,17 @@ export function usePredictions(gameDay: number | null) {
             .forEach((p) => predMap.set(p.fixture_id, p))
           setPredictions(predMap)
         } else {
-          const { data, error: predError } = await supabase
-            .from('predictions')
-            .select('*')
-            .eq('user_id', user.id)
-            .in('fixture_id', fixtureData.map((f) => f.id))
+          const fixtureIds = fixtureData.map((f) => f.id)
+          const { data, error: predError } = await supabase.rpc('get_user_predictions', {
+            p_user_id: user.id,
+            p_session_token: user.session_token,
+            p_fixture_ids: fixtureIds.length > 0 ? fixtureIds : null,
+          })
 
           if (predError) throw predError
 
           const predMap = new Map<number, Prediction>()
-          data?.forEach((p) => predMap.set(p.fixture_id, p))
+          ;(data as Prediction[] | null)?.forEach((p) => predMap.set(p.fixture_id, p))
           setPredictions(predMap)
         }
       }
@@ -102,12 +103,20 @@ export function useUserPredictions(userId: string | undefined) {
       return
     }
 
+    if (!user || userId !== user.id) {
+      setPredictions([])
+      setLoading(false)
+      return
+    }
+
     supabase
-      .from('predictions')
-      .select('*')
-      .eq('user_id', userId)
+      .rpc('get_user_predictions', {
+        p_user_id: user.id,
+        p_session_token: user.session_token,
+        p_fixture_ids: null,
+      })
       .then(({ data, error }) => {
-        if (!error) setPredictions(data ?? [])
+        if (!error) setPredictions((data as Prediction[]) ?? [])
         setLoading(false)
       })
   }, [userId, user])

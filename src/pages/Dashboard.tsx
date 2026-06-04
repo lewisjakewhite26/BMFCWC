@@ -74,7 +74,7 @@ export default function Dashboard() {
             {getTimeGreeting()}, {user?.display_name?.split(' ')[0] ?? 'there'}
           </h1>
           <p className="text-sm sm:text-base text-gray-500">
-            Enter your predictions before each match kicks off
+            Enter your predictions before the matchday closes — one hour before the first match kicks off
           </p>
         </div>
 

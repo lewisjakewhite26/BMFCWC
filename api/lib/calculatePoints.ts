@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from './supabaseAdmin'
+import { getSupabaseAdmin } from './supabaseAdmin.js'
 
 /** Score a fixture and recalculate all user points via existing DB logic */
 export async function calculatePoints(

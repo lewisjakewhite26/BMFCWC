@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from './supabaseAdmin'
+import { getSupabaseAdmin } from './supabaseAdmin.js'
 
 export async function checkAndAutoCompleteMatchdays(gameDays: number[]): Promise<void> {
   if (gameDays.length === 0) return

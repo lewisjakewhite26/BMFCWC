@@ -66,14 +66,14 @@ export function usePastMatchdays() {
 
         const allFixtureIds = Array.from(fixtureMap.values()).flat().map((f) => f.id)
         if (allFixtureIds.length > 0) {
-          const { data: preds } = await supabase
-            .from('predictions')
-            .select('*')
-            .eq('user_id', user.id)
-            .in('fixture_id', allFixtureIds)
+          const { data: preds } = await supabase.rpc('get_user_predictions', {
+            p_user_id: user.id,
+            p_session_token: user.session_token,
+            p_fixture_ids: allFixtureIds,
+          })
 
           const predMap = new Map<number, Prediction>()
-          preds?.forEach((p) => predMap.set(p.fixture_id, p))
+          ;(preds as Prediction[] | null)?.forEach((p) => predMap.set(p.fixture_id, p))
           setPredictions(predMap)
         } else {
           setPredictions(new Map())

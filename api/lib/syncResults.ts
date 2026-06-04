@@ -1,6 +1,6 @@
-import { getSupabaseAdmin } from './supabaseAdmin'
-import { calculatePoints } from './calculatePoints'
-import { checkAndAutoCompleteMatchdays } from './autoProgression'
+import { getSupabaseAdmin } from './supabaseAdmin.js'
+import { calculatePoints } from './calculatePoints.js'
+import { checkAndAutoCompleteMatchdays } from './autoProgression.js'
 
 const MAX_DAILY_REQUESTS = 80
 const FINISHED_STATUSES = ['FT', 'AET', 'PEN']

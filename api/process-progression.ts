@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from './lib/supabaseAdmin'
-import { runProcessProgression } from './lib/processProgression'
+import { getSupabaseAdmin } from './lib/supabaseAdmin.js'
+import { runProcessProgression } from './lib/processProgression.js'
 
 export const config = {
   runtime: 'nodejs',

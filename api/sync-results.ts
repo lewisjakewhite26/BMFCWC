@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from './lib/supabaseAdmin'
-import { runSyncResults, recordSyncError } from './lib/syncResults'
+import { getSupabaseAdmin } from './lib/supabaseAdmin.js'
+import { runSyncResults, recordSyncError } from './lib/syncResults.js'
 
 export const config = {
   runtime: 'nodejs',

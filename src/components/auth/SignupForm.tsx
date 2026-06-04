@@ -41,7 +41,7 @@ export function SignupForm() {
       setTimeout(() => navigate('/dashboard'), 1500)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Signup failed'
-      toast.error(msg.includes('already taken') ? 'Username already taken' : 'Signup failed')
+      toast.error(msg.includes('already taken') ? 'Username already taken' : msg)
     } finally {
       setLoading(false)
     }

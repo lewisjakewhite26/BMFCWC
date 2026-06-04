@@ -332,12 +332,12 @@ const HOW_IT_WORKS = [
   {
     icon: '🎯',
     title: 'Predict the scores',
-    body: 'Enter your scoreline for every fixture before kickoff. Both teams, every match.',
+    body: 'Enter your scoreline for every fixture on the matchday. Both teams, every match.',
   },
   {
     icon: '🔒',
     title: 'Confirm your predictions',
-    body: 'Submit your predictions before the match starts. Once it kicks off, they\'re locked.',
+    body: 'Submit your predictions before the matchday closes. They lock one hour before the first match kicks off.',
   },
   {
     icon: '🏆',
