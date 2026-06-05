@@ -4,6 +4,7 @@ import { PageShell } from '../components/ui/PageBackground'
 import { GameDayPanel } from '../components/match/GameDayPanel'
 import { UserStatsGrid } from '../components/match/UserStatsGrid'
 import { DashboardStatusBanner } from '../components/dashboard/DashboardStatusBanner'
+import { EmptyDashboardCard } from '../components/dashboard/EmptyDashboardCard'
 import { MatchCardSkeleton } from '../components/ui/Skeleton'
 import { ErrorBoundary } from '../components/ui/ErrorBoundary'
 import { useAuth } from '../hooks/useAuth'
@@ -67,6 +68,8 @@ export default function Dashboard() {
   const cutoff = useMemo(() => getGameDayCutoff(fixtures), [fixtures])
   const hasOpenMatchday = !!openGameDay && openGameDay.status === 'open'
 
+  const hasNoActiveGames = !loading && !openGameDay
+
   return (
     <PageShell>
       {visible && recap && tier && (
@@ -94,13 +97,17 @@ export default function Dashboard() {
         <UserStatsGrid />
 
         {!loading && (
-          <DashboardStatusBanner
-            lockedCount={lockedCount}
-            total={fixtures.length}
-            cutoff={hasOpenMatchday && fixtures.length > 0 ? cutoff : null}
-            hasOpenMatchday={hasOpenMatchday}
-            onExpired={() => reload({ silent: true })}
-          />
+          hasNoActiveGames ? (
+            <EmptyDashboardCard />
+          ) : (
+            <DashboardStatusBanner
+              lockedCount={lockedCount}
+              total={fixtures.length}
+              cutoff={hasOpenMatchday && fixtures.length > 0 ? cutoff : null}
+              hasOpenMatchday={hasOpenMatchday}
+              onExpired={() => reload({ silent: true })}
+            />
+          )
         )}
 
         <ErrorBoundary>
@@ -119,11 +126,7 @@ export default function Dashboard() {
               isCurrent
               onConfirmChange={handleConfirmChange}
             />
-          ) : (
-            <div className="glass-card p-8 text-center">
-              <p className="text-gray-500">No matchday is currently open. Check back later.</p>
-            </div>
-          )}
+          ) : null}
         </ErrorBoundary>
       </div>
     </PageShell>
