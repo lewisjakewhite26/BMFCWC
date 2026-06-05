@@ -4,11 +4,14 @@ import { PageShell } from '../components/ui/PageBackground'
 import { Leaderboard } from '../components/leaderboard/Leaderboard'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { ErrorBoundary } from '../components/ui/ErrorBoundary'
+import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { useLeaderboard } from '../hooks/useLeaderboard'
+import { usePrizePot } from '../hooks/usePrizePot'
 import { useAuth } from '../hooks/useAuth'
 
 export default function LeaderboardPage() {
   const { entries, loading } = useLeaderboard()
+  const { stats: prizePot, loading: prizePotLoading } = usePrizePot()
   const { user } = useAuth()
 
   return (
@@ -28,7 +31,11 @@ export default function LeaderboardPage() {
           <h1 className="font-display text-2xl sm:text-4xl text-brand-navy text-center mb-2">
             The Table
           </h1>
-          <p className="text-gray-500 text-center mb-5 sm:mb-8">Updated after every result</p>
+          <p className="text-gray-500 text-center mb-5">Updated after every result</p>
+
+          <div className="mb-5 sm:mb-8">
+            <PrizePotBanner stats={prizePot} loading={prizePotLoading} />
+          </div>
 
           <div className="glass-card p-4 sm:p-6">
             <ErrorBoundary>

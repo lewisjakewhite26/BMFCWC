@@ -15,11 +15,14 @@ import { getTimeGreeting } from '../lib/greeting'
 import { isDevBypassSession, getMockOpenGameDay } from '../lib/devBypass'
 import { useMatchdayRecap } from '../hooks/useMatchdayRecap'
 import { MatchdayRecapModal } from '../components/dashboard/MatchdayRecapModal'
+import { PrizePotBanner } from '../components/ui/PrizePotBanner'
+import { usePrizePot } from '../hooks/usePrizePot'
 import type { GameDay } from '../types'
 
 export default function Dashboard() {
   const { user } = useAuth()
   const { visible, recap, tier, queuePosition, queueTotal, dismiss } = useMatchdayRecap()
+  const { stats: prizePot, loading: prizePotLoading } = usePrizePot()
   const [openGameDay, setOpenGameDay] = useState<GameDay | null>(null)
   const [loadingDay, setLoadingDay] = useState(true)
   const [lockedFixtures, setLockedFixtures] = useState<Set<number>>(new Set())
@@ -95,6 +98,8 @@ export default function Dashboard() {
         </div>
 
         <UserStatsGrid />
+
+        <PrizePotBanner stats={prizePot} loading={prizePotLoading} variant="inline" />
 
         {!loading && (
           hasNoActiveGames ? (

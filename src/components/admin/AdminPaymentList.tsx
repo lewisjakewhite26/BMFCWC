@@ -1,3 +1,5 @@
+import { PrizePotPaymentBar } from '../ui/PrizePotPaymentBar'
+import { calculatePrizePotGbp, calculateTotalCollectedGbp, formatPrizePotGbp, ENTRY_FEE_GBP, PRIZE_POT_SHARE } from '../../lib/prizePot'
 import type { AdminUserRow } from '../../types'
 
 interface AdminPaymentListProps {
@@ -14,17 +16,43 @@ export function AdminPaymentList({
   togglingId,
 }: AdminPaymentListProps) {
   const paidCount = users.filter((u) => u.has_paid).length
+  const totalCount = users.length
+  const prizePot = calculatePrizePotGbp(paidCount)
+  const potentialPot = calculatePrizePotGbp(totalCount)
+  const totalCollected = calculateTotalCollectedGbp(paidCount)
+  const sharePct = Math.round(PRIZE_POT_SHARE * 100)
+  const hasUnpaid = totalCount > paidCount
 
   return (
     <div className="overflow-hidden min-w-0">
-      <div className="px-4 sm:px-5 py-4 border-b border-brand-blue/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <p className="text-sm text-gray-600">
-          <span className="font-mono font-bold text-brand-navy">{paidCount}</span>
-          {' '}of{' '}
-          <span className="font-mono font-bold text-brand-navy">{users.length}</span>
-          {' '}paid
-        </p>
-        <p className="text-xs text-gray-400">Tick when cash received</p>
+      <div className="px-4 sm:px-5 py-4 border-b border-brand-blue/10 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm text-gray-600">
+            <span className="font-mono font-bold text-brand-navy">{paidCount}</span>
+            {' '}of{' '}
+            <span className="font-mono font-bold text-brand-navy">{totalCount}</span>
+            {' '}paid
+          </p>
+          <p className="text-xs text-gray-400">Tick when cash received</p>
+        </div>
+        <div className="rounded-xl bg-brand-gold/10 border border-brand-gold/20 px-3 py-3 space-y-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1">
+            <p className="text-xs text-gray-500">
+              {formatPrizePotGbp(totalCollected)} collected · {sharePct}% to winners
+            </p>
+            <p className="text-sm font-semibold text-brand-navy">
+              Prize pot{' '}
+              <span className="font-display text-lg text-brand-gold tabular-nums">{formatPrizePotGbp(prizePot)}</span>
+              {hasUnpaid && (
+                <span className="text-gray-400 font-normal text-xs ml-1">
+                  / {formatPrizePotGbp(potentialPot)} potential
+                </span>
+              )}
+              <span className="text-gray-400 font-normal text-xs ml-1">(£{ENTRY_FEE_GBP}/player)</span>
+            </p>
+          </div>
+          <PrizePotPaymentBar paidEntrants={paidCount} totalEntrants={totalCount} compact />
+        </div>
       </div>
 
       {users.length === 0 ? (

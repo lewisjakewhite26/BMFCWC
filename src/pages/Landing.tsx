@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Navbar } from '../components/ui/Navbar'
 import { PageShell } from '../components/ui/PageBackground'
+import { PrizePotBanner } from '../components/ui/PrizePotBanner'
+import { usePrizePot } from '../hooks/usePrizePot'
 
 const POINTER_LERP = 0.044
 const POINTER_FADE = 0.036
@@ -396,6 +398,7 @@ function FadeUp({
 export default function Landing() {
   const heroRef = useRef<HTMLElement>(null)
   const [showScrollHint, setShowScrollHint] = useState(true)
+  const { stats: prizePot, loading: prizePotLoading } = usePrizePot()
 
   useEffect(() => {
     const onScroll = () => {
@@ -434,11 +437,15 @@ export default function Landing() {
             </h1>
 
             <p
-              className="text-[#6B7280] font-normal max-w-[500px] mx-auto mt-6 mb-10 leading-relaxed"
+              className="text-[#6B7280] font-normal max-w-[500px] mx-auto mt-6 mb-8 leading-relaxed"
               style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)' }}
             >
               Predict the scoreline for every fixture and follow your position throughout the tournament.
             </p>
+
+            <div className="mb-8 w-full">
+              <PrizePotBanner stats={prizePot} loading={prizePotLoading} variant="hero" />
+            </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { ENTRY_FEE_GBP } from '../../lib/prizePot'
 
 type UrgencyTier = 1 | 2 | 3 | 4
 
@@ -98,7 +99,7 @@ export function PaymentStatusIndicator({
           className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[200] w-[min(18rem,calc(100vw-2rem))] px-3.5 py-3 text-xs text-brand-navy leading-relaxed glass-card shadow-glass border border-brand-blue/15 pointer-events-none md:pointer-events-auto"
         >
           <p className="mb-2.5">
-            Entry fee outstanding — please pay £10 to join the predictor.
+            Entry fee outstanding — please pay £{ENTRY_FEE_GBP} to join the predictor.
           </p>
           <p className="font-semibold text-brand-navy mb-1">Bank transfer to:</p>
           <p className="mb-2.5 space-y-0.5">
