@@ -48,9 +48,17 @@ export function AdminFixtureRow({ fixture, onSubmitResult }: AdminFixtureRowProp
       </div>
 
       <div className="flex items-center gap-3">
-        <ScoreInput value={homeScore} onChange={setHomeScore} />
+        <ScoreInput
+          value={homeScore}
+          onChange={setHomeScore}
+          ariaLabel={`${fixture.home_team} score`}
+        />
         <span className="text-gray-400">—</span>
-        <ScoreInput value={awayScore} onChange={setAwayScore} />
+        <ScoreInput
+          value={awayScore}
+          onChange={setAwayScore}
+          ariaLabel={`${fixture.away_team} score`}
+        />
         <button
           onClick={handleSubmit}
           disabled={loading}

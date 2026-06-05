@@ -53,6 +53,7 @@ export function MatchScoreLine({
               onChange={onHomeChange}
               onAdvance={() => awayInputRef.current?.focus({ preventScroll: true })}
               awaiting={awaiting}
+              ariaLabel={`Predicted score for ${homeTeam}`}
             />
             <span className={`font-light text-lg sm:text-xl select-none ${awaiting ? 'text-brand-gold/40' : 'text-gray-400'}`}>
               —
@@ -62,6 +63,7 @@ export function MatchScoreLine({
               value={awayScore}
               onChange={onAwayChange}
               awaiting={awaiting}
+              ariaLabel={`Predicted score for ${awayTeam}`}
             />
           </>
         ) : (

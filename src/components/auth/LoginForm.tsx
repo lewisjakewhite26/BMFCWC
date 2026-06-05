@@ -49,8 +49,11 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label className="block text-sm text-gray-500 mb-2">Username</label>
+        <label htmlFor="login-username" className="block text-sm text-gray-500 mb-2">
+          Username
+        </label>
         <input
+          id="login-username"
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -62,8 +65,16 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label className="block text-sm text-gray-500 mb-3 text-center">4-Digit Passcode</label>
-        <PinInput value={passcode} onChange={setPasscode} error={error} autoFocus />
+        <label id="login-passcode-label" className="block text-sm text-gray-500 mb-3 text-center">
+          4-Digit Passcode
+        </label>
+        <PinInput
+          value={passcode}
+          onChange={setPasscode}
+          error={error}
+          autoFocus
+          groupLabel="4-digit passcode"
+        />
       </div>
 
       <button type="submit" disabled={loading} className="btn-primary w-full">

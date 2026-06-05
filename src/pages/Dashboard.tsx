@@ -117,7 +117,6 @@ export default function Dashboard() {
               predictions={predictions}
               onSave={handleSave}
               isCurrent
-              onCutoffExpired={() => reload({ silent: true })}
               onConfirmChange={handleConfirmChange}
             />
           ) : (

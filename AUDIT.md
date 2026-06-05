@@ -6,7 +6,7 @@
 **Scope:** Full codebase (read-only)  
 **Operator context:** Closed BMFC team app — not a public internet product; ~10–30 trusted users, private sign-up link  
 **Build verified:** `npm run build` succeeds — 650.24 kB JS (192.79 kB gzip), 43.85 kB CSS  
-**Lint verified:** `npm run lint` — **0 errors, 3 warnings**
+**Lint verified:** `npm run lint` — **0 errors, 0 warnings**
 
 ### Audit history
 
@@ -28,7 +28,7 @@
 | `CRON_SECRET` | ✅ Likely set previously |
 | **Cron vs API quota** | ✅ **Fixed** — see [Resolved: cron quota](#resolved-cron-vs-api-quota) |
 | README (migrations, env vars, lock rules) | ✅ Updated |
-| ESLint errors (3) | ✅ Fixed |
+| ESLint errors + warnings | ✅ Fixed (0 / 0) |
 
 **Security posture note:** 4-digit passcode, no login rate limiting, and no server-side session invalidation are **accepted** for this closed-team deployment — not treated as launch blockers below.
 
@@ -263,15 +263,11 @@ On a busy day, sync may call API-Football several times while matches are live �
 |----------|-------|
 | Medium | Zero automated tests — acceptable for v1 team launch, risky for refactors. |
 | Medium | No CI workflow. |
-| Positive | `npm run build` passes; `npm run lint` 0 errors. |
+| Positive | `npm run build` passes; `npm run lint` clean (0 errors, 0 warnings). |
 
 ### ESLint (current)
 
-| Severity | File | Issue |
-|----------|------|-------|
-| Warning | `AdminPaymentList.tsx:78` | Fast-refresh export pattern |
-| Warning | `useAuth.tsx:138` | Same |
-| Warning | `Admin.tsx:79` | `useEffect` missing `load` dep |
+No open lint issues as of this audit.
 
 ---
 

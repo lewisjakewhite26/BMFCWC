@@ -6,10 +6,11 @@ interface ScoreInputProps {
   onAdvance?: () => void
   disabled?: boolean
   awaiting?: boolean
+  ariaLabel: string
 }
 
 export const ScoreInput = forwardRef<HTMLInputElement, ScoreInputProps>(function ScoreInput(
-  { value, onChange, onAdvance, disabled = false, awaiting = false },
+  { value, onChange, onAdvance, disabled = false, awaiting = false, ariaLabel },
   ref
 ) {
   const isEmpty = value === ''
@@ -78,6 +79,7 @@ export const ScoreInput = forwardRef<HTMLInputElement, ScoreInputProps>(function
       maxLength={2}
       value={value === '' ? '' : String(value)}
       disabled={disabled}
+      aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
       onChange={handleChange}
       className={`

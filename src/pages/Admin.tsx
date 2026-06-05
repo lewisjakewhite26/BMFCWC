@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Navbar } from '../components/ui/Navbar'
 import { PageShell } from '../components/ui/PageBackground'
@@ -7,7 +7,7 @@ import { AdminFixtureRow } from '../components/admin/AdminFixtureRow'
 import { SyncStatusCard } from '../components/admin/SyncStatusCard'
 import { ProgressionStatusCard } from '../components/admin/ProgressionStatusCard'
 import { AdminPredictionsAudit } from '../components/admin/AdminPredictionsAudit'
-import { AdminPaymentList, toggleUserPaid } from '../components/admin/AdminPaymentList'
+import { AdminPaymentList } from '../components/admin/AdminPaymentList'
 import { AdminSection } from '../components/admin/AdminSection'
 import { KnockoutFixtureEditor } from '../components/admin/KnockoutFixtureEditor'
 import { TableSkeleton } from '../components/ui/Skeleton'
@@ -15,6 +15,7 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary'
 import { useAuth } from '../hooks/useAuth'
 import { isDevBypassSession, MOCK_LEADERBOARD, MOCK_GAME_DAYS, MOCK_FIXTURES } from '../lib/devBypass'
 import { supabase } from '../lib/supabase'
+import { toggleUserPaid } from '../lib/adminPayments'
 import { fetchGameDays, fetchAllFixtures } from '../lib/fixtures'
 import type { GameDay, Fixture, AdminUserRow } from '../types'
 
@@ -41,7 +42,7 @@ export default function Admin() {
   const [togglingPaidId, setTogglingPaidId] = useState<string | null>(null)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       if (user && isDevBypassSession(user)) {
@@ -72,11 +73,11 @@ export default function Admin() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     if (user) load()
-  }, [user])
+  }, [user, load])
 
   const incompleteFixtures = gameDays.reduce<Record<number, number>>((acc, gd) => {
     acc[gd.game_day] = fixtures.filter(

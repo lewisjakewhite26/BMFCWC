@@ -15,22 +15,6 @@ export function calculatePoints(
   return 0
 }
 
-export function isFixtureLocked(
-  fixture: { kickoff_utc: string; status: string; home_score: number | null; away_score?: number | null },
-  gameDayFixtures?: { kickoff_utc: string }[],
-  gameDayOpen?: boolean
-): boolean {
-  if (fixture.status === 'completed') return true
-  if (fixture.home_score !== null && fixture.away_score != null) return true
-
-  if (gameDayFixtures && gameDayFixtures.length > 0) {
-    return isGameDayPredictionsLocked(gameDayFixtures, gameDayOpen ?? false)
-  }
-
-  if (fixture.status === 'locked') return true
-  return new Date(fixture.kickoff_utc) <= new Date()
-}
-
 /** Earliest kickoff across a matchday's fixtures */
 export function getEarliestKickoff(fixtures: { kickoff_utc: string }[]): Date | null {
   if (fixtures.length === 0) return null

@@ -8,6 +8,7 @@ interface PinInputProps {
   disabled?: boolean
   error?: boolean
   autoFocus?: boolean
+  groupLabel?: string
 }
 
 export function PinInput({
@@ -17,6 +18,7 @@ export function PinInput({
   disabled = false,
   error = false,
   autoFocus = false,
+  groupLabel = 'Passcode',
 }: PinInputProps) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
   const [focused, setFocused] = useState(autoFocus ? 0 : -1)
@@ -70,7 +72,11 @@ export function PinInput({
   }
 
   return (
-    <div className={`flex gap-2.5 sm:gap-3 justify-center ${error ? 'pin-shake' : ''}`}>
+    <div
+      role="group"
+      aria-label={groupLabel}
+      className={`flex gap-2.5 sm:gap-3 justify-center ${error ? 'pin-shake' : ''}`}
+    >
       {Array.from({ length }).map((_, i) => (
         <motion.input
           key={i}
@@ -81,6 +87,7 @@ export function PinInput({
           maxLength={1}
           value={digits[i]?.trim() || ''}
           disabled={disabled}
+          aria-label={`${groupLabel}, digit ${i + 1} of ${length}`}
           onFocus={() => setFocused(i)}
           onBlur={() => setFocused(-1)}
           onChange={(e) => {

@@ -71,8 +71,11 @@ export function SignupForm() {
       </div>
 
       <div>
-        <label className="block text-sm text-gray-500 mb-2">Username</label>
+        <label htmlFor="signup-username" className="block text-sm text-gray-500 mb-2">
+          Username
+        </label>
         <input
+          id="signup-username"
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -83,8 +86,11 @@ export function SignupForm() {
       </div>
 
       <div>
-        <label className="block text-sm text-gray-500 mb-2">Display Name</label>
+        <label htmlFor="signup-display-name" className="block text-sm text-gray-500 mb-2">
+          Display Name
+        </label>
         <input
+          id="signup-display-name"
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
@@ -95,13 +101,17 @@ export function SignupForm() {
       </div>
 
       <div>
-        <label className="block text-sm text-gray-500 mb-3 text-center">Create 4-Digit Passcode</label>
-        <PinInput value={passcode} onChange={setPasscode} />
+        <label id="signup-passcode-label" className="block text-sm text-gray-500 mb-3 text-center">
+          Create 4-Digit Passcode
+        </label>
+        <PinInput value={passcode} onChange={setPasscode} groupLabel="Create passcode" />
       </div>
 
       <div>
-        <label className="block text-sm text-gray-500 mb-3 text-center">Confirm Passcode</label>
-        <PinInput value={confirmPasscode} onChange={setConfirmPasscode} />
+        <label id="signup-confirm-passcode-label" className="block text-sm text-gray-500 mb-3 text-center">
+          Confirm Passcode
+        </label>
+        <PinInput value={confirmPasscode} onChange={setConfirmPasscode} groupLabel="Confirm passcode" />
       </div>
 
       <button type="submit" disabled={loading} className="btn-primary w-full">

@@ -2,8 +2,7 @@ import { useState, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { MatchCard } from './MatchCard'
 import { HistoryMatchCard } from './HistoryMatchCard'
-import { CutoffCountdown } from './CutoffCountdown'
-import { getGameDayCutoff, isGameDayPredictionsLocked } from '../../lib/scoring'
+import { isGameDayPredictionsLocked } from '../../lib/scoring'
 import type { Fixture, Prediction, GameDay } from '../../types'
 
 interface GameDayPanelProps {
@@ -14,7 +13,6 @@ interface GameDayPanelProps {
   defaultOpen?: boolean
   isCurrent?: boolean
   isHistory?: boolean
-  onCutoffExpired?: () => void
   onConfirmChange?: (fixtureId: number, confirmed: boolean) => void
 }
 
@@ -26,7 +24,6 @@ export function GameDayPanel({
   defaultOpen = false,
   isCurrent = false,
   isHistory = false,
-  onCutoffExpired,
   onConfirmChange,
 }: GameDayPanelProps) {
   const [open, setOpen] = useState(defaultOpen || isCurrent)
@@ -43,7 +40,6 @@ export function GameDayPanel({
   }
 
   const label = gameDay.label.replace(/Game Day/gi, 'Matchday')
-  const cutoff = useMemo(() => getGameDayCutoff(fixtures), [fixtures])
   const predictionsLocked = isGameDayPredictionsLocked(
     fixtures,
     gameDay.status === 'open' && isCurrent
@@ -86,11 +82,6 @@ export function GameDayPanel({
               {gameDay.status}
             </span>
           </div>
-          {gameDay.status === 'open' && !isCurrent && (
-            <div className="hidden md:block">
-              <CutoffCountdown cutoff={cutoff} onExpired={onCutoffExpired} />
-            </div>
-          )}
         </div>
         <div className="p-4 sm:p-5">{fixtureList}</div>
       </div>
