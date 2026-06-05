@@ -73,6 +73,8 @@ Other scripts:
 ```bash
 npm run build   # production build
 npm run lint    # ESLint
+npm run test    # unit tests in watch mode
+npm run test:ci # run tests once (used by CI)
 npm run preview # preview production build
 ```
 
