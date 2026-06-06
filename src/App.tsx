@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard'
 import PreviousPredictions from './pages/PreviousPredictions'
 import LeaderboardPage from './pages/Leaderboard'
 import Admin from './pages/Admin'
+import AdminOperations from './pages/AdminOperations'
+import AdminTechnical from './pages/AdminTechnical'
 import { PageBackground } from './components/ui/PageBackground'
 import { MobileBottomNav } from './components/ui/MobileBottomNav'
 
@@ -66,6 +68,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute adminOnly>
             <Admin />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/ops"
+        element={
+          <ProtectedRoute adminOnly>
+            <AdminOperations />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/technical"
+        element={
+          <ProtectedRoute adminOnly>
+            <AdminTechnical />
           </ProtectedRoute>
         }
       />

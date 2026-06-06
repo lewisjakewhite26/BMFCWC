@@ -28,6 +28,8 @@ interface AdminPredictionsAuditProps {
   gameDays: GameDay[]
   users: AdminUserRow[]
   devMode?: boolean
+  friendly?: boolean
+  defaultGameDay?: number | null
 }
 
 function pointsBadgeClass(points: number): string {
@@ -36,12 +38,26 @@ function pointsBadgeClass(points: number): string {
   return 'bg-gray-100 text-gray-500 border-gray-200'
 }
 
-export function AdminPredictionsAudit({ gameDays, users, devMode = false }: AdminPredictionsAuditProps) {
+export function AdminPredictionsAudit({
+  gameDays,
+  users,
+  devMode = false,
+  friendly = false,
+  defaultGameDay = null,
+}: AdminPredictionsAuditProps) {
   const { user } = useAuth()
   const [rows, setRows] = useState<PredictionAuditRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [gameDayFilter, setGameDayFilter] = useState<number | 'all'>('all')
+  const [gameDayFilter, setGameDayFilter] = useState<number | 'all'>(() =>
+    defaultGameDay !== null ? defaultGameDay : 'all'
+  )
   const [userFilter, setUserFilter] = useState<string>('all')
+
+  useEffect(() => {
+    if (defaultGameDay !== null) {
+      setGameDayFilter(defaultGameDay)
+    }
+  }, [defaultGameDay])
 
   const load = useCallback(async () => {
     if (devMode) {
@@ -124,17 +140,24 @@ export function AdminPredictionsAudit({ gameDays, users, devMode = false }: Admi
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 text-sm">
-          <span className="rounded-xl bg-white/50 border border-brand-blue/10 px-3 py-1.5 text-gray-600">
-            <span className="font-mono font-bold text-brand-navy">{summary.count}</span> predictions
-          </span>
-          <span className="rounded-xl bg-white/50 border border-brand-blue/10 px-3 py-1.5 text-gray-600">
-            <span className="font-mono font-bold text-brand-navy">{summary.scored}</span> scored
-          </span>
-          <span className="rounded-xl bg-white/50 border border-brand-blue/10 px-3 py-1.5 text-gray-600">
-            <span className="font-mono font-bold text-brand-gold">{summary.totalPts}</span> pts in view
-          </span>
-        </div>
+        {!friendly && (
+          <div className="flex flex-wrap gap-3 text-sm">
+            <span className="rounded-xl bg-white/50 border border-brand-blue/10 px-3 py-1.5 text-gray-600">
+              <span className="font-mono font-bold text-brand-navy">{summary.count}</span> predictions
+            </span>
+            <span className="rounded-xl bg-white/50 border border-brand-blue/10 px-3 py-1.5 text-gray-600">
+              <span className="font-mono font-bold text-brand-navy">{summary.scored}</span> scored
+            </span>
+            <span className="rounded-xl bg-white/50 border border-brand-blue/10 px-3 py-1.5 text-gray-600">
+              <span className="font-mono font-bold text-brand-gold">{summary.totalPts}</span> pts in view
+            </span>
+          </div>
+        )}
+        {friendly && rows.length > 0 && (
+          <p className="text-sm text-gray-600">
+            Showing <span className="font-semibold text-brand-navy tabular-nums">{summary.count}</span> predictions
+          </p>
+        )}
       </div>
 
       {loading ? (
@@ -148,11 +171,11 @@ export function AdminPredictionsAudit({ gameDays, users, devMode = false }: Admi
           <table className="w-full text-sm min-w-[720px]">
             <thead className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-brand-blue/10">
               <tr className="text-gray-500 uppercase text-[11px]">
-                <th className="text-left p-3 font-medium">Player</th>
-                <th className="text-left p-3 font-medium">MD</th>
+                <th className="text-left p-3 font-medium">{friendly ? 'Name' : 'Player'}</th>
+                {!friendly && <th className="text-left p-3 font-medium">MD</th>}
                 <th className="text-left p-3 font-medium">Match</th>
-                <th className="text-center p-3 font-medium">Prediction</th>
-                <th className="text-center p-3 font-medium">Actual</th>
+                <th className="text-center p-3 font-medium">{friendly ? 'Guess' : 'Prediction'}</th>
+                <th className="text-center p-3 font-medium">{friendly ? 'Actual' : 'Actual'}</th>
                 <th className="text-center p-3 font-medium">Pts</th>
               </tr>
             </thead>
@@ -166,9 +189,11 @@ export function AdminPredictionsAudit({ gameDays, users, devMode = false }: Admi
                   >
                     <td className="p-3">
                       <p className="font-medium text-brand-navy">{row.display_name}</p>
-                      <p className="text-[11px] text-gray-400 font-mono">@{row.username}</p>
+                      {!friendly && (
+                        <p className="text-[11px] text-gray-400 font-mono">@{row.username}</p>
+                      )}
                     </td>
-                    <td className="p-3 font-mono text-gray-600">{row.game_day}</td>
+                    {!friendly && <td className="p-3 font-mono text-gray-600">{row.game_day}</td>}
                     <td className="p-3 min-w-[140px]">
                       <p className="text-brand-navy leading-snug">
                         {row.home_team} vs {row.away_team}

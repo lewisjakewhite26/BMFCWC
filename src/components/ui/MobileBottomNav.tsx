@@ -107,7 +107,7 @@ export function MobileBottomNav() {
           </div>
           {user.is_admin && (
             <Link
-              to="/admin"
+              to="/admin/ops"
               onClick={() => setMenuOpen(false)}
               className="flex items-center min-h-[48px] px-3 rounded-xl text-brand-navy font-medium active:bg-brand-blue/5"
             >

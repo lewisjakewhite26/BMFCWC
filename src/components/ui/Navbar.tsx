@@ -27,6 +27,7 @@ export function Navbar({ displayName: propDisplayName, totalPoints: propPoints }
   const openMatchday = useOpenMatchdayNumber()
 
   const isActive = (path: string) => location.pathname === path
+  const isAdminActive = location.pathname.startsWith('/admin')
 
   return (
     <nav className="sticky top-0 z-50 glass-nav pt-[env(safe-area-inset-top)]">
@@ -74,8 +75,8 @@ export function Navbar({ displayName: propDisplayName, totalPoints: propPoints }
               </div>
               {authUser?.is_admin && (
                 <Link
-                  to="/admin"
-                  className={`nav-link ${isActive('/admin') ? 'nav-link-active' : ''}`}
+                  to="/admin/ops"
+                  className={`nav-link ${isAdminActive ? 'nav-link-active' : ''}`}
                 >
                   Admin
                 </Link>
