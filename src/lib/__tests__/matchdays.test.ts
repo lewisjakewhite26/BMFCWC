@@ -1,0 +1,68 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import {
+  getDefaultGroupTab,
+  getGroupTabLabel,
+  getMatchdayTabState,
+  isGroupStageGameDay,
+} from '../matchdays'
+import type { Fixture, GameDay } from '../../types'
+
+const openDay = (gameDay: number): GameDay => ({
+  id: gameDay,
+  game_day: gameDay,
+  label: `Group Stage — Matchday ${gameDay}`,
+  status: 'open',
+  opened_at: '2026-06-01T12:00:00.000Z',
+  completed_at: null,
+})
+
+const fixtures = [
+  { kickoff_utc: '2026-06-15T19:00:00.000Z' },
+] as Fixture[]
+
+describe('matchdays', () => {
+  it('identifies group-stage matchdays', () => {
+    expect(isGroupStageGameDay(1)).toBe(true)
+    expect(isGroupStageGameDay(3)).toBe(true)
+    expect(isGroupStageGameDay(4)).toBe(false)
+  })
+
+  it('formats group tab labels', () => {
+    expect(getGroupTabLabel(2)).toBe('Group Game 2')
+  })
+
+  describe('getMatchdayTabState', () => {
+    beforeEach(() => vi.useFakeTimers())
+    afterEach(() => vi.useRealTimers())
+
+    it('returns complete for completed matchdays', () => {
+      expect(getMatchdayTabState({ ...openDay(1), status: 'completed' }, fixtures)).toBe('complete')
+    })
+
+    it('returns closed after the cutoff', () => {
+      vi.setSystemTime(new Date('2026-06-15T20:00:00.000Z'))
+      expect(getMatchdayTabState(openDay(1), fixtures)).toBe('closed')
+    })
+
+    it('returns predict while open and before cutoff', () => {
+      vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'))
+      expect(getMatchdayTabState(openDay(1), fixtures)).toBe('predict')
+    })
+  })
+
+  describe('getDefaultGroupTab', () => {
+    beforeEach(() => vi.useFakeTimers())
+    afterEach(() => vi.useRealTimers())
+
+    it('prefers the first predictable tab', () => {
+      vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'))
+      const gameDays = [openDay(1), openDay(2), openDay(3)]
+      const fixturesByDay = {
+        1: [{ kickoff_utc: '2026-06-10T19:00:00.000Z' }] as Fixture[],
+        2: [{ kickoff_utc: '2026-06-18T19:00:00.000Z' }] as Fixture[],
+        3: [{ kickoff_utc: '2026-06-24T19:00:00.000Z' }] as Fixture[],
+      }
+      expect(getDefaultGroupTab(gameDays, fixturesByDay)).toBe(2)
+    })
+  })
+})

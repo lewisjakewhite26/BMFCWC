@@ -31,12 +31,24 @@ export function isDevBypassSession(user: User | null | undefined): boolean {
 }
 
 export const MOCK_GAME_DAYS: GameDay[] = [
-  { id: 1, game_day: 1, label: 'Group Stage — Matchday 1', status: 'completed', opened_at: '2026-06-01T12:00:00.000Z', completed_at: '2026-06-03T23:00:00.000Z' },
+  { id: 1, game_day: 1, label: 'Group Stage — Matchday 1', status: 'open', opened_at: '2026-06-01T12:00:00.000Z', completed_at: null },
   { id: 2, game_day: 2, label: 'Group Stage — Matchday 2', status: 'open', opened_at: new Date().toISOString(), completed_at: null },
-  { id: 3, game_day: 3, label: 'Group Stage — Matchday 3', status: 'locked', opened_at: null, completed_at: null },
+  { id: 3, game_day: 3, label: 'Group Stage — Matchday 3', status: 'open', opened_at: new Date().toISOString(), completed_at: null },
 ]
 
 export const MOCK_FIXTURES: Fixture[] = [
+  {
+    id: 101, game_day: 1, stage: 'group', group_name: 'A',
+    home_team: 'Mexico', away_team: 'South Africa', home_flag: '🇲🇽', away_flag: '🇿🇦',
+    kickoff_utc: '2026-06-11T19:00:00.000Z', venue: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico',
+    status: 'open', home_score: null, away_score: null,
+  },
+  {
+    id: 102, game_day: 1, stage: 'group', group_name: 'C',
+    home_team: 'Brazil', away_team: 'Morocco', home_flag: '🇧🇷', away_flag: '🇲🇦',
+    kickoff_utc: '2026-06-13T22:00:00.000Z', venue: 'MetLife Stadium', city: 'New Jersey', country: 'USA',
+    status: 'open', home_score: null, away_score: null,
+  },
   {
     id: 1, game_day: 2, stage: 'group', group_name: 'A',
     home_team: 'Mexico', away_team: 'South Africa', home_flag: '🇲🇽', away_flag: '🇿🇦',
@@ -71,6 +83,18 @@ export const MOCK_FIXTURES: Fixture[] = [
     id: 6, game_day: 2, stage: 'group', group_name: 'L',
     home_team: 'England', away_team: 'Croatia', home_flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', away_flag: '🇭🇷',
     kickoff_utc: '2026-06-15T19:00:00.000Z', venue: 'AT&T Stadium', city: 'Dallas', country: 'USA',
+    status: 'open', home_score: null, away_score: null,
+  },
+  {
+    id: 301, game_day: 3, stage: 'group', group_name: 'B',
+    home_team: 'Switzerland', away_team: 'Canada', home_flag: '🇨🇭', away_flag: '🇨🇦',
+    kickoff_utc: '2026-06-24T19:00:00.000Z', venue: 'BC Place', city: 'Vancouver', country: 'Canada',
+    status: 'open', home_score: null, away_score: null,
+  },
+  {
+    id: 302, game_day: 3, stage: 'group', group_name: 'L',
+    home_team: 'England', away_team: 'Croatia', home_flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', away_flag: '🇭🇷',
+    kickoff_utc: '2026-06-27T19:00:00.000Z', venue: 'Gillette Stadium', city: 'Boston', country: 'USA',
     status: 'open', home_score: null, away_score: null,
   },
 ]

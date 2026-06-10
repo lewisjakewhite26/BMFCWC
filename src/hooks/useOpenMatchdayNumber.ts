@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { fetchOpenGameDay } from '../lib/fixtures'
+import { fetchOpenGameDayNumbers } from '../lib/fixtures'
 import { useAuth } from './useAuth'
 
-/** Current open matchday number, or null if none is open. */
+/** Highest open matchday number (group + knockout), or null if none are open. */
 export function useOpenMatchdayNumber(): number | null {
   const { user } = useAuth()
   const [matchday, setMatchday] = useState<number | null>(null)
@@ -15,9 +15,11 @@ export function useOpenMatchdayNumber(): number | null {
 
     let cancelled = false
 
-    fetchOpenGameDay()
-      .then((gameDay) => {
-        if (!cancelled) setMatchday(gameDay?.game_day ?? null)
+    fetchOpenGameDayNumbers()
+      .then((openDays) => {
+        if (!cancelled) {
+          setMatchday(openDays.length > 0 ? Math.max(...openDays) : null)
+        }
       })
       .catch(() => {
         if (!cancelled) setMatchday(null)

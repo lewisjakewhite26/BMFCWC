@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:ci": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-seed": "node scripts/generate-seed.mjs",
+    "verify-fixtures": "node scripts/verify-fixtures-api.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

@@ -4,11 +4,10 @@
  */
 import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
+import { fileURLToPath, pathToFileURL } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-function bstToUtc(dateStr, timeStr) {
+export function bstToUtc(dateStr, timeStr) {
   const [day, month, year] = dateStr.split(' ');
   const months = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
   const [time, ampm] = timeStr.split(/(?=[ap]m)/i);
@@ -21,7 +20,7 @@ function bstToUtc(dateStr, timeStr) {
   return d.toISOString();
 }
 
-const groupFixtures = [
+export const groupFixtures = [
   // Game Day 1
   { gd: 1, stage: 'group', group: 'A', home: 'Mexico', away: 'South Africa', hf: '🇲🇽', af: '🇿🇦', date: '11 Jun 2026', time: '8pm', venue: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico' },
   { gd: 1, stage: 'group', group: 'A', home: 'South Korea', away: 'Czech Republic', hf: '🇰🇷', af: '🇨🇿', date: '12 Jun 2026', time: '3am', venue: 'Estadio Akron', city: 'Zapopan', country: 'Mexico' },
@@ -67,11 +66,11 @@ const groupFixtures = [
   { gd: 2, stage: 'group', group: 'G', home: 'New Zealand', away: 'Egypt', hf: '🇳🇿', af: '🇪🇬', date: '22 Jun 2026', time: '2am', venue: 'BC Place', city: 'Vancouver', country: 'Canada' },
   { gd: 2, stage: 'group', group: 'J', home: 'Argentina', away: 'Austria', hf: '🇦🇷', af: '🇦🇹', date: '22 Jun 2026', time: '6pm', venue: 'AT&T Stadium', city: 'Arlington', country: 'USA' },
   { gd: 2, stage: 'group', group: 'I', home: 'France', away: 'Iraq', hf: '🇫🇷', af: '🇮🇶', date: '22 Jun 2026', time: '10pm', venue: 'Lincoln Financial Field', city: 'Philadelphia', country: 'USA' },
-  { gd: 2, stage: 'group', group: 'I', home: 'Norway', away: 'Senegal', hf: '🇳🇴', af: '🇸🇳', date: '23 Jun 2026', time: '1am', venue: 'BMO Field', city: 'Toronto', country: 'Canada' },
+  { gd: 2, stage: 'group', group: 'I', home: 'Norway', away: 'Senegal', hf: '🇳🇴', af: '🇸🇳', date: '23 Jun 2026', time: '1am', venue: 'MetLife Stadium', city: 'New Jersey', country: 'USA' },
   { gd: 2, stage: 'group', group: 'J', home: 'Jordan', away: 'Algeria', hf: '🇯🇴', af: '🇩🇿', date: '23 Jun 2026', time: '4am', venue: "Levi's Stadium", city: 'Santa Clara', country: 'USA' },
   { gd: 2, stage: 'group', group: 'K', home: 'Portugal', away: 'Uzbekistan', hf: '🇵🇹', af: '🇺🇿', date: '23 Jun 2026', time: '6pm', venue: 'NRG Stadium', city: 'Houston', country: 'USA' },
   { gd: 2, stage: 'group', group: 'L', home: 'England', away: 'Ghana', hf: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', af: '🇬🇭', date: '23 Jun 2026', time: '9pm', venue: 'Gillette Stadium', city: 'Boston', country: 'USA' },
-  { gd: 2, stage: 'group', group: 'L', home: 'Panama', away: 'Croatia', hf: '🇵🇦', af: '🇭🇷', date: '24 Jun 2026', time: '12am', venue: 'Gillette Stadium', city: 'Boston', country: 'USA' },
+  { gd: 2, stage: 'group', group: 'L', home: 'Panama', away: 'Croatia', hf: '🇵🇦', af: '🇭🇷', date: '24 Jun 2026', time: '12am', venue: 'BMO Field', city: 'Toronto', country: 'Canada' },
   { gd: 2, stage: 'group', group: 'K', home: 'Colombia', away: 'DR Congo', hf: '🇨🇴', af: '🇨🇩', date: '24 Jun 2026', time: '3am', venue: 'Estadio Akron', city: 'Zapopan', country: 'Mexico' },
 
   // Game Day 3
@@ -154,8 +153,8 @@ let sql = `-- BMFC World Cup Predictor Seed Data
 
 INSERT INTO game_days (game_day, label, status, opened_at) VALUES
   (1, 'Group Stage — Matchday 1', 'open', now()),
-  (2, 'Group Stage — Matchday 2', 'locked', NULL),
-  (3, 'Group Stage — Matchday 3', 'locked', NULL),
+  (2, 'Group Stage — Matchday 2', 'open', now()),
+  (3, 'Group Stage — Matchday 3', 'open', now()),
   (4, 'Round of 32', 'locked', NULL),
   (5, 'Round of 16', 'locked', NULL),
   (6, 'Quarter-finals', 'locked', NULL),
@@ -170,7 +169,7 @@ const rows = [];
 for (const f of groupFixtures) {
   const [day, month, year] = f.date.split(' ');
   const kickoff = bstToUtc(`${day} ${month} ${year}`, f.time);
-  const status = f.gd === 1 ? 'open' : 'upcoming';
+  const status = f.gd <= 3 ? 'open' : 'upcoming';
   rows.push(
     `(${f.gd}, '${f.stage}', '${f.group}', '${esc(f.home)}', '${esc(f.away)}', '${f.hf}', '${f.af}', '${kickoff}', '${esc(f.venue)}', '${esc(f.city)}', '${esc(f.country)}', '${status}')`
   );
@@ -184,6 +183,9 @@ for (const f of knockoutFixtures) {
 
 sql += rows.join(',\n') + ';\n';
 
-const outPath = join(__dirname, '..', 'supabase', 'seed.sql');
-writeFileSync(outPath, sql);
-console.log(`Generated ${rows.length} fixtures to ${outPath}`);
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  const outPath = join(__dirname, '..', 'supabase', 'seed.sql');
+  writeFileSync(outPath, sql);
+  console.log(`Generated ${rows.length} fixtures to ${outPath}`);
+}

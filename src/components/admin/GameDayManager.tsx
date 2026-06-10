@@ -1,4 +1,5 @@
 import toast from 'react-hot-toast'
+import { isGroupStageGameDay } from '../../lib/matchdays'
 import type { GameDay } from '../../types'
 
 interface GameDayManagerProps {
@@ -37,7 +38,8 @@ export function GameDayManager({ gameDays, onOpen, onComplete, incompleteFixture
     <div className="space-y-3">
       {gameDays.map((gd) => {
         const canOpen = gd.status === 'locked' && (
-          gd.game_day === 1 || gameDays.find((g) => g.game_day === gd.game_day - 1)?.status === 'completed'
+          isGroupStageGameDay(gd.game_day) ||
+          gameDays.find((g) => g.game_day === gd.game_day - 1)?.status === 'completed'
         )
         const incomplete = incompleteFixtures[gd.game_day] ?? 0
         const canComplete = gd.status === 'open' && incomplete === 0

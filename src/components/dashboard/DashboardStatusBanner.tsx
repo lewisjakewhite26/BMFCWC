@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { formatCutoffLocal } from '../../lib/scoring'
 import { hapticCelebrate } from '../../lib/haptics'
+import type { MatchdayTabState } from '../../lib/matchdays'
 
 interface DashboardStatusBannerProps {
   lockedCount: number
   total: number
   cutoff: Date | null
   hasOpenMatchday: boolean
+  tabState?: MatchdayTabState
   onExpired?: () => void
 }
 
@@ -80,6 +82,7 @@ export function DashboardStatusBanner({
   total,
   cutoff,
   hasOpenMatchday,
+  tabState,
   onExpired,
 }: DashboardStatusBannerProps) {
   const cutoffMs = cutoff?.getTime() ?? null
@@ -123,10 +126,22 @@ export function DashboardStatusBanner({
     if (!allLocked) wasComplete.current = false
   }, [allLocked, hasOpenMatchday, total])
 
-  if (!hasOpenMatchday) {
+  if (tabState === 'complete') {
+    return (
+      <div className={`rounded-2xl px-4 py-4 ${bannerClass('complete')}`}>
+        <p className="text-sm font-medium text-emerald-700">This matchday is complete — view your results below.</p>
+      </div>
+    )
+  }
+
+  if (tabState === 'locked' || !hasOpenMatchday) {
     return (
       <div className={`rounded-2xl px-4 py-4 ${bannerClass('idle')}`}>
-        <p className="text-sm font-medium text-gray-600">No matchday is currently open. Check back later.</p>
+        <p className="text-sm font-medium text-gray-600">
+          {tabState === 'locked'
+            ? 'This matchday is not open yet. Check back later.'
+            : 'No matchday is currently open. Check back later.'}
+        </p>
       </div>
     )
   }
