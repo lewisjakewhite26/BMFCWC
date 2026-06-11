@@ -1,69 +1,25 @@
-import { getSupabaseAdmin } from './lib/supabaseAdmin.js'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { isAdminAuthorized } from './lib/adminAuth.js'
+import { errorMessage, sendJson } from './lib/apiResponse.js'
 import { runProcessProgression } from './lib/processProgression.js'
 
-export const config = {
-  runtime: 'nodejs',
-}
-
-async function isAuthorized(req: Request): Promise<boolean> {
-  const cronSecret = process.env.CRON_SECRET
-  const authHeader = req.headers.get('authorization')
-
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
-    return true
-  }
-
-  if (req.method === 'POST') {
-    try {
-      const body = (await req.clone().json()) as { admin_id?: string; session_token?: string }
-      if (!body.admin_id || !body.session_token) return false
-
-      const supabase = getSupabaseAdmin()
-      const { data: user } = await supabase
-        .from('users')
-        .select('is_admin')
-        .eq('id', body.admin_id)
-        .eq('session_token', body.session_token)
-        .maybeSingle()
-
-      return user?.is_admin === true
-    } catch {
-      return false
-    }
-  }
-
-  if (process.env.NODE_ENV === 'development' && !cronSecret) {
-    return true
-  }
-
-  return false
-}
-
-export default async function handler(req: Request): Promise<Response> {
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 })
-  }
-
-  if (!(await isAuthorized(req))) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   try {
+    if (req.method !== 'GET' && req.method !== 'POST') {
+      sendJson(res, 405, { error: 'Method not allowed' })
+      return
+    }
+
+    if (!(await isAdminAuthorized(req))) {
+      sendJson(res, 401, { error: 'Unauthorized' })
+      return
+    }
+
     const force = req.method === 'POST'
     const result = await runProcessProgression({ force })
-
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    sendJson(res, 200, result)
   } catch (error) {
     console.error('Progression error:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Progression failed',
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
+    sendJson(res, 500, { success: false, error: errorMessage(error) })
   }
 }

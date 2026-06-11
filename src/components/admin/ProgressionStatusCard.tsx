@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
+import { parseApiResponse } from '../../lib/parseApiResponse'
 import { useAuth } from '../../hooks/useAuth'
 import type { ProgressionStatus } from '../../types'
 
@@ -157,8 +158,11 @@ export function ProgressionStatusCard({ devMode = false }: ProgressionStatusCard
         }),
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Process failed')
+      const { data, text } = await parseApiResponse<{ error?: string; message?: string }>(res)
+      if (!res.ok) {
+        throw new Error(data?.error ?? (text || 'Process failed'))
+      }
+      if (!data) throw new Error(text || 'Process failed')
 
       toast.success(data.message ?? 'Progression processed')
       await load()

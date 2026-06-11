@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
+import { parseApiResponse } from '../../lib/parseApiResponse'
 import { useAuth } from '../../hooks/useAuth'
 import type { ApiSyncStatus } from '../../types'
 
@@ -125,13 +126,21 @@ export function SyncStatusCard({ devMode = false }: SyncStatusCardProps) {
         }),
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Sync failed')
+      const { data, text } = await parseApiResponse<{
+        error?: string
+        skipped?: boolean
+        reason?: string
+        updated?: number
+      }>(res)
+      if (!res.ok) {
+        throw new Error(data?.error ?? (text || 'Sync failed'))
+      }
+      if (!data) throw new Error(text || 'Sync failed')
 
       if (data.skipped) {
         toast(data.reason ?? 'Sync skipped', { icon: 'ℹ️' })
       } else {
-        toast.success(data.updated > 0 ? `Synced — ${data.updated} fixture(s) updated` : 'Sync complete — no new results')
+        toast.success((data.updated ?? 0) > 0 ? `Synced — ${data.updated} fixture(s) updated` : 'Sync complete — no new results')
       }
       await load()
     } catch (err) {

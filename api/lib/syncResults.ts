@@ -301,11 +301,18 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
 }
 
 export async function recordSyncError(error: unknown): Promise<void> {
-  const supabase = getSupabaseAdmin()
-  const today = todayDateString()
-  await supabase.rpc('update_api_sync_log', {
-    p_date: today,
-    p_status: 'error',
-    p_message: error instanceof Error ? error.message : String(error),
-  })
+  try {
+    const supabase = getSupabaseAdmin()
+    const today = todayDateString()
+    const { error: rpcError } = await supabase.rpc('update_api_sync_log', {
+      p_date: today,
+      p_status: 'error',
+      p_message: error instanceof Error ? error.message : String(error),
+    })
+    if (rpcError) {
+      console.error('update_api_sync_log failed:', rpcError.message)
+    }
+  } catch (logError) {
+    console.error('recordSyncError failed:', logError)
+  }
 }
