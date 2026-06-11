@@ -4,6 +4,7 @@ import { checkAndAutoCompleteMatchdays } from './autoProgression.js'
 
 const MAX_DAILY_REQUESTS = 80
 const FINISHED_STATUSES = ['FT', 'AET', 'PEN']
+const KICKOFF_MATCH_MS = 48 * 60 * 60 * 1000
 
 interface ApiFootballFixture {
   fixture: { id: number; date: string; status: { short: string } }
@@ -18,6 +19,8 @@ const TEAM_ALIASES: Record<string, string> = {
   'democratic republic of the congo': 'dr congo',
   'united states': 'usa',
   'bosnia herzegovina': 'bosnia and herzegovina',
+  'bosnia and herzegovina': 'bosnia herzegovina',
+  'czechia': 'czech republic',
 }
 
 function normalizeTeamName(name: string): string {
@@ -47,18 +50,16 @@ function teamsMatch(dbHome: string, dbAway: string, apiHome: string, apiAway: st
   return homeOk && awayOk
 }
 
-function utcDayBounds(date: string): { start: string; end: string } {
-  return {
-    start: `${date}T00:00:00.000Z`,
-    end: `${date}T23:59:59.999Z`,
-  }
+function shiftDateString(date: string, days: number): string {
+  const shifted = new Date(`${date}T12:00:00.000Z`)
+  shifted.setUTCDate(shifted.getUTCDate() + days)
+  return shifted.toISOString().split('T')[0]
 }
 
 async function findOurFixtureId(
   apiFixtureId: number,
   homeTeam: string,
   awayTeam: string,
-  syncDate: string,
   apiKickoff: string
 ): Promise<number | null> {
   const supabase = getSupabaseAdmin()
@@ -71,18 +72,19 @@ async function findOurFixtureId(
 
   if (mapping?.fixture_id) return mapping.fixture_id
 
-  const { start, end } = utcDayBounds(syncDate)
+  const apiTime = new Date(apiKickoff).getTime()
+  const windowStart = new Date(apiTime - KICKOFF_MATCH_MS).toISOString()
+  const windowEnd = new Date(apiTime + KICKOFF_MATCH_MS).toISOString()
 
   const { data: candidates } = await supabase
     .from('fixtures')
     .select('id, home_team, away_team, kickoff_utc, game_day')
     .neq('status', 'completed')
-    .gte('kickoff_utc', start)
-    .lte('kickoff_utc', end)
+    .gte('kickoff_utc', windowStart)
+    .lte('kickoff_utc', windowEnd)
 
   if (!candidates?.length) return null
 
-  const apiTime = new Date(apiKickoff).getTime()
   let best: { id: number; game_day: number; delta: number } | null = null
 
   for (const fixture of candidates) {
@@ -98,8 +100,7 @@ async function findOurFixtureId(
 
   if (!best) return null
 
-  // Kickoff must be within 6 hours — guards against wrong-day edge cases
-  if (best.delta > 6 * 60 * 60 * 1000) {
+  if (best.delta > KICKOFF_MATCH_MS) {
     console.log(
       `Rejected ${homeTeam} vs ${awayTeam}: kickoff mismatch (${Math.round(best.delta / 3600000)}h)`
     )
@@ -120,6 +121,8 @@ export interface SyncResult {
   skipped?: boolean
   reason?: string
   updated?: number
+  finishedSeen?: number
+  unmatched?: string[]
   requestCount?: number
 }
 
@@ -181,7 +184,14 @@ async function getSyncDates(now: Date): Promise<string[]> {
   return [...dates].sort()
 }
 
-async function fetchApiFixtures(date: string): Promise<ApiFootballFixture[]> {
+function apiFootballHeaders(apiKey: string): Record<string, string> {
+  return {
+    'x-apisports-key': apiKey,
+    'x-rapidapi-key': apiKey,
+  }
+}
+
+function getApiFootballConfig(): { apiKey: string; baseUrl: string; league: string; season: string } {
   const apiKey = process.env.API_FOOTBALL_KEY
   const baseUrl = process.env.API_FOOTBALL_BASE_URL
   const league = process.env.API_FOOTBALL_LEAGUE
@@ -191,13 +201,12 @@ async function fetchApiFixtures(date: string): Promise<ApiFootballFixture[]> {
     throw new Error('Missing API-Football environment variables')
   }
 
-  const url = `${baseUrl}/fixtures?league=${league}&season=${season}&date=${date}`
-  const response = await fetch(url, {
-    headers: {
-      'x-apisports-key': apiKey,
-      'x-rapidapi-key': apiKey,
-    },
-  })
+  return { apiKey, baseUrl, league, season }
+}
+
+async function fetchApiFootball(path: string): Promise<ApiFootballFixture[]> {
+  const { apiKey, baseUrl } = getApiFootballConfig()
+  const response = await fetch(`${baseUrl}${path}`, { headers: apiFootballHeaders(apiKey) })
 
   if (!response.ok) {
     throw new Error(`API-Football responded with ${response.status}`)
@@ -205,6 +214,18 @@ async function fetchApiFixtures(date: string): Promise<ApiFootballFixture[]> {
 
   const data = await response.json()
   return (data.response ?? []) as ApiFootballFixture[]
+}
+
+async function fetchApiFixtures(date: string): Promise<ApiFootballFixture[]> {
+  const { league, season } = getApiFootballConfig()
+  return fetchApiFootball(`/fixtures?league=${league}&season=${season}&date=${date}`)
+}
+
+async function fetchFinishedApiFixtures(from: string, to: string): Promise<ApiFootballFixture[]> {
+  const { league, season } = getApiFootballConfig()
+  return fetchApiFootball(
+    `/fixtures?league=${league}&season=${season}&from=${from}&to=${to}&status=FT-AET-PEN`
+  )
 }
 
 export async function runSyncResults(options?: { force?: boolean }): Promise<SyncResult> {
@@ -248,22 +269,36 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
   const apiFixturesById = new Map<number, ApiFootballFixture>()
   let requestCount = currentCount
 
-  for (const syncDate of syncDates) {
-    if (requestCount >= MAX_DAILY_REQUESTS) break
-
+  const trackApiRequest = async (): Promise<boolean> => {
+    if (requestCount >= MAX_DAILY_REQUESTS) return false
     const { data: newCount, error: countError } = await supabase.rpc('increment_api_request_log', {
       p_date: today,
     })
     if (countError) throw countError
     requestCount = newCount as number
+    return true
+  }
 
+  for (const syncDate of syncDates) {
+    if (!(await trackApiRequest())) break
     const dayFixtures = await fetchApiFixtures(syncDate)
     for (const apiFix of dayFixtures) {
       apiFixturesById.set(apiFix.fixture.id, apiFix)
     }
   }
 
+  const fromDate = shiftDateString(syncDates[0], -1)
+  const toDate = shiftDateString(syncDates[syncDates.length - 1], 1)
+  if (await trackApiRequest()) {
+    const finishedFixtures = await fetchFinishedApiFixtures(fromDate, toDate)
+    for (const apiFix of finishedFixtures) {
+      apiFixturesById.set(apiFix.fixture.id, apiFix)
+    }
+  }
+
   let updatedCount = 0
+  let finishedSeen = 0
+  const unmatched: string[] = []
   const affectedGameDays: number[] = []
 
   for (const apiFix of apiFixturesById.values()) {
@@ -277,16 +312,18 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
     if (!FINISHED_STATUSES.includes(apiStatus)) continue
     if (homeScore === null || awayScore === null) continue
 
-    const fixtureDate = apiFix.fixture.date.split('T')[0]
+    finishedSeen++
+
     const ourFixtureId = await findOurFixtureId(
       apiFixtureId,
       homeTeam,
       awayTeam,
-      fixtureDate,
       apiFix.fixture.date
     )
     if (!ourFixtureId) {
-      console.log(`No match found for ${homeTeam} vs ${awayTeam} (${fixtureDate})`)
+      const label = `${homeTeam} vs ${awayTeam}`
+      unmatched.push(label)
+      console.log(`No match found for ${label} (${apiFix.fixture.date})`)
       continue
     }
 
@@ -310,10 +347,16 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
 
   await checkAndAutoCompleteMatchdays(affectedGameDays)
 
-  const message =
+  let message =
     updatedCount > 0
       ? `Updated ${updatedCount} fixture${updatedCount === 1 ? '' : 's'}`
       : 'No new results to apply'
+
+  if (updatedCount === 0 && finishedSeen > 0 && unmatched.length > 0) {
+    message = `${finishedSeen} finished in API, 0 matched (e.g. ${unmatched.slice(0, 2).join(', ')})`
+  } else if (updatedCount === 0 && finishedSeen > 0) {
+    message = `${finishedSeen} finished in API, already scored`
+  }
 
   await supabase.rpc('update_api_sync_log', {
     p_date: today,
@@ -324,6 +367,8 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
   return {
     success: true,
     updated: updatedCount,
+    finishedSeen,
+    unmatched: unmatched.length > 0 ? unmatched : undefined,
     requestCount,
   }
 }
