@@ -62,6 +62,36 @@ export function usePredictions(gameDay: number | null) {
     load()
   }, [load])
 
+  // Live updates when individual fixtures finish (results + points per match)
+  useEffect(() => {
+    if (!user || gameDay === null || isDevBypassSession(user)) return
+
+    const reloadSilent = () => {
+      load({ silent: true })
+    }
+
+    const channel = supabase
+      .channel(`matchday-${gameDay}-live`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'fixtures', filter: `game_day=eq.${gameDay}` },
+        reloadSilent
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'predictions', filter: `user_id=eq.${user.id}` },
+        reloadSilent
+      )
+      .subscribe()
+
+    const pollId = window.setInterval(reloadSilent, 60_000)
+
+    return () => {
+      window.clearInterval(pollId)
+      supabase.removeChannel(channel)
+    }
+  }, [gameDay, user, load])
+
   const submitPrediction = async (fixtureId: number, home: number, away: number) => {
     if (!user) throw new Error('You need to be signed in to view predictions')
 
@@ -110,7 +140,7 @@ export function useUserPredictions(userId: string | undefined) {
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!userId) {
       setPredictions([])
       setLoading(false)
@@ -129,17 +159,37 @@ export function useUserPredictions(userId: string | undefined) {
       return
     }
 
-    supabase
-      .rpc('get_user_predictions', {
-        p_user_id: user.id,
-        p_session_token: user.session_token,
-        p_fixture_ids: null,
-      })
-      .then(({ data, error }) => {
-        if (!error) setPredictions((data as Prediction[]) ?? [])
-        setLoading(false)
-      })
+    const { data, error } = await supabase.rpc('get_user_predictions', {
+      p_user_id: user.id,
+      p_session_token: user.session_token,
+      p_fixture_ids: null,
+    })
+
+    if (!error) setPredictions((data as Prediction[]) ?? [])
+    setLoading(false)
   }, [userId, user])
+
+  useEffect(() => {
+    setLoading(true)
+    load()
+  }, [load])
+
+  useEffect(() => {
+    if (!user || !userId || userId !== user.id || isDevBypassSession(user)) return
+
+    const channel = supabase
+      .channel('user-predictions-live')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'predictions', filter: `user_id=eq.${user.id}` },
+        () => load()
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, userId, load])
 
   return { predictions, loading }
 }

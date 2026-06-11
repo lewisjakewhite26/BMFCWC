@@ -43,6 +43,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser().finally(() => setLoading(false))
   }, [refreshUser])
 
+  // Refresh total_points when a fixture is scored (users row updates per match)
+  useEffect(() => {
+    if (!user || isDevBypassSession(user)) return
+
+    const channel = supabase
+      .channel('session-user-live')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${user.id}` },
+        () => {
+          refreshUser()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user?.id, refreshUser])
+
   const login = async (username: string, passcode: string) => {
     if (!isSupabaseConfigured) {
       throw new Error('Sign-in is unavailable — Supabase is not configured for this deployment.')

@@ -38,7 +38,7 @@ Built for the BMFC team — sign-up is open, but access is shared privately with
    supabase/seed.sql
    ```
 
-4. Enable **Realtime** on the `users` table (Database → Replication) so the leaderboard updates live.
+4. Enable **Realtime** on `users`, `fixtures`, and `predictions` (Database → Replication) so points update live after each match.
 
 5. Copy your project URL, anon key, and service role key from Project Settings → API.
 
@@ -118,7 +118,7 @@ If the site loads, sign-in works, and the admin sync panel runs, your Vercel env
 
 Configured in `vercel.json`:
 
-- **`/api/sync-results`** — every 20 minutes (pulls scores from API-Football)
+- **`/api/sync-results`** — every 10 minutes (pulls scores from API-Football)
 - **`/api/process-progression`** — every 5 minutes (knockout placeholder updates)
 
 ---

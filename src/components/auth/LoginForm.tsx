@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../hooks/useAuth'
+import { getAuthErrorMessage } from '../../lib/authErrors'
 import { PinInput } from './PinInput'
 
 export function LoginForm() {
@@ -26,9 +27,10 @@ export function LoginForm() {
       await login(username.trim(), passcode)
       toast.success('Signed in')
       navigate('/dashboard')
-    } catch {
+    } catch (err) {
       setError(true)
-      toast.error('Invalid username or passcode')
+      const message = getAuthErrorMessage(err, 'Invalid username or passcode')
+      toast.error(message)
       setTimeout(() => setError(false), 500)
     } finally {
       setLoading(false)
