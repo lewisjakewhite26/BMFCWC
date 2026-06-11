@@ -150,20 +150,35 @@ async function hasActiveFixtures(now: Date): Promise<boolean> {
     .lte('kickoff_utc', windowEnd)
     .neq('status', 'completed')
 
-  const todayStart = new Date(now)
-  todayStart.setHours(0, 0, 0, 0)
+  const lookbackStart = new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString()
 
-  const { data: todayIncomplete } = await supabase
+  const { data: recentIncomplete } = await supabase
     .from('fixtures')
     .select('id')
-    .gte('kickoff_utc', todayStart.toISOString())
+    .gte('kickoff_utc', lookbackStart)
     .lte('kickoff_utc', now.toISOString())
     .neq('status', 'completed')
 
-  return (
-    (activeFixtures?.length ?? 0) > 0 ||
-    (todayIncomplete?.length ?? 0) > 0
-  )
+  return (activeFixtures?.length ?? 0) > 0 || (recentIncomplete?.length ?? 0) > 0
+}
+
+async function getSyncDates(now: Date): Promise<string[]> {
+  const supabase = getSupabaseAdmin()
+  const dates = new Set<string>([todayDateString()])
+  const lookbackStart = new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString()
+
+  const { data } = await supabase
+    .from('fixtures')
+    .select('kickoff_utc')
+    .gte('kickoff_utc', lookbackStart)
+    .lte('kickoff_utc', now.toISOString())
+    .neq('status', 'completed')
+
+  for (const row of data ?? []) {
+    dates.add(row.kickoff_utc.split('T')[0])
+  }
+
+  return [...dates].sort()
 }
 
 async function fetchApiFixtures(date: string): Promise<ApiFootballFixture[]> {
@@ -229,17 +244,29 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
     }
   }
 
-  const apiFixtures = await fetchApiFixtures(today)
+  const syncDates = await getSyncDates(now)
+  const apiFixturesById = new Map<number, ApiFootballFixture>()
+  let requestCount = currentCount
 
-  const { data: newCount, error: countError } = await supabase.rpc('increment_api_request_log', {
-    p_date: today,
-  })
-  if (countError) throw countError
+  for (const syncDate of syncDates) {
+    if (requestCount >= MAX_DAILY_REQUESTS) break
+
+    const { data: newCount, error: countError } = await supabase.rpc('increment_api_request_log', {
+      p_date: today,
+    })
+    if (countError) throw countError
+    requestCount = newCount as number
+
+    const dayFixtures = await fetchApiFixtures(syncDate)
+    for (const apiFix of dayFixtures) {
+      apiFixturesById.set(apiFix.fixture.id, apiFix)
+    }
+  }
 
   let updatedCount = 0
   const affectedGameDays: number[] = []
 
-  for (const apiFix of apiFixtures) {
+  for (const apiFix of apiFixturesById.values()) {
     const apiFixtureId = apiFix.fixture.id
     const apiStatus = apiFix.fixture.status.short
     const homeScore = apiFix.goals.home
@@ -250,15 +277,16 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
     if (!FINISHED_STATUSES.includes(apiStatus)) continue
     if (homeScore === null || awayScore === null) continue
 
+    const fixtureDate = apiFix.fixture.date.split('T')[0]
     const ourFixtureId = await findOurFixtureId(
       apiFixtureId,
       homeTeam,
       awayTeam,
-      today,
+      fixtureDate,
       apiFix.fixture.date
     )
     if (!ourFixtureId) {
-      console.log(`No match found for ${homeTeam} vs ${awayTeam} (${today})`)
+      console.log(`No match found for ${homeTeam} vs ${awayTeam} (${fixtureDate})`)
       continue
     }
 
@@ -296,7 +324,7 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
   return {
     success: true,
     updated: updatedCount,
-    requestCount: newCount as number,
+    requestCount,
   }
 }
 

@@ -56,9 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           refreshUser()
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'predictions', filter: `user_id=eq.${user.id}` },
+        () => {
+          refreshUser()
+        }
+      )
       .subscribe()
 
+    const pollId = window.setInterval(refreshUser, 60_000)
+
     return () => {
+      window.clearInterval(pollId)
       supabase.removeChannel(channel)
     }
   }, [user?.id, refreshUser])

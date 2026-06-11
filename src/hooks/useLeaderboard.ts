@@ -10,8 +10,9 @@ export function useLeaderboard(limit?: number) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const showLoading = !options?.silent
+    if (showLoading) setLoading(true)
     setError(null)
 
     try {
@@ -33,7 +34,6 @@ export function useLeaderboard(limit?: number) {
       if (fetchError) throw fetchError
       setEntries(data ?? [])
     } catch (err) {
-      // Fall back to mock data in dev when Supabase isn't configured
       if (import.meta.env.DEV) {
         const data = limit ? MOCK_LEADERBOARD.slice(0, limit) : MOCK_LEADERBOARD
         setEntries(data)
@@ -41,7 +41,7 @@ export function useLeaderboard(limit?: number) {
         setError(err instanceof Error ? err.message : 'Failed to load leaderboard')
       }
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }, [limit, user])
 
@@ -50,17 +50,21 @@ export function useLeaderboard(limit?: number) {
 
     if (isDevBypassSession(user)) return
 
+    const reloadSilent = () => {
+      load({ silent: true })
+    }
+
     const channel = supabase
       .channel('leaderboard-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-        load()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'predictions' }, () => {
-        load()
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, reloadSilent)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'predictions' }, reloadSilent)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'fixtures' }, reloadSilent)
       .subscribe()
 
+    const pollId = window.setInterval(reloadSilent, 60_000)
+
     return () => {
+      window.clearInterval(pollId)
       supabase.removeChannel(channel)
     }
   }, [load, user])
