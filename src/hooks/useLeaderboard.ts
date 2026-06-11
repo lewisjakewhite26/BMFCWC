@@ -61,10 +61,16 @@ export function useLeaderboard(limit?: number) {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'fixtures' }, reloadSilent)
       .subscribe()
 
-    const pollId = window.setInterval(reloadSilent, 60_000)
+    const pollId = window.setInterval(reloadSilent, 30_000)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') reloadSilent()
+    }
+    document.addEventListener('visibilitychange', onVisible)
 
     return () => {
       window.clearInterval(pollId)
+      document.removeEventListener('visibilitychange', onVisible)
       supabase.removeChannel(channel)
     }
   }, [load, user])

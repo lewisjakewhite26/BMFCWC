@@ -6,10 +6,57 @@ const MAX_DAILY_REQUESTS = 80
 const FINISHED_STATUSES = ['FT', 'AET', 'PEN']
 const KICKOFF_MATCH_MS = 48 * 60 * 60 * 1000
 
+interface ApiFootballScoreline {
+  home: number | null
+  away: number | null
+}
+
 interface ApiFootballFixture {
   fixture: { id: number; date: string; status: { short: string } }
   goals: { home: number | null; away: number | null }
+  score?: {
+    fulltime?: ApiFootballScoreline
+    extratime?: ApiFootballScoreline
+    penalty?: ApiFootballScoreline
+  }
   teams: { home: { name: string }; away: { name: string } }
+}
+
+function extractFinishedScores(
+  apiFix: ApiFootballFixture
+): { home: number; away: number } | null {
+  const status = apiFix.fixture.status.short
+  if (!FINISHED_STATUSES.includes(status)) return null
+
+  let home = apiFix.goals?.home
+  let away = apiFix.goals?.away
+
+  if (home === null || away === null) {
+    const ft = apiFix.score?.fulltime
+    if (ft?.home != null && ft?.away != null) {
+      home = ft.home
+      away = ft.away
+    }
+  }
+
+  if (status === 'AET' && (home === null || away === null)) {
+    const et = apiFix.score?.extratime
+    if (et?.home != null && et?.away != null) {
+      home = et.home
+      away = et.away
+    }
+  }
+
+  if (status === 'PEN' && (home === null || away === null)) {
+    const pen = apiFix.score?.penalty
+    if (pen?.home != null && pen?.away != null) {
+      home = pen.home
+      away = pen.away
+    }
+  }
+
+  if (home === null || away === null) return null
+  return { home, away }
 }
 
 const TEAM_ALIASES: Record<string, string> = {
@@ -83,11 +130,10 @@ async function findOurFixtureId(
     .gte('kickoff_utc', windowStart)
     .lte('kickoff_utc', windowEnd)
 
-  if (!candidates?.length) return null
-
   let best: { id: number; game_day: number; delta: number } | null = null
+  let matchedByTeamPairing = false
 
-  for (const fixture of candidates) {
+  for (const fixture of candidates ?? []) {
     if (!teamsMatch(fixture.home_team, fixture.away_team, homeTeam, awayTeam)) {
       continue
     }
@@ -98,9 +144,37 @@ async function findOurFixtureId(
     }
   }
 
+  if (!best) {
+    const { data: allIncomplete } = await supabase
+      .from('fixtures')
+      .select('id, home_team, away_team, kickoff_utc, game_day')
+      .neq('status', 'completed')
+
+    const teamMatches = (allIncomplete ?? []).filter((fixture) =>
+      teamsMatch(fixture.home_team, fixture.away_team, homeTeam, awayTeam)
+    )
+
+    if (teamMatches.length === 1) {
+      matchedByTeamPairing = true
+      best = {
+        id: teamMatches[0].id,
+        game_day: teamMatches[0].game_day,
+        delta: Math.abs(new Date(teamMatches[0].kickoff_utc).getTime() - apiTime),
+      }
+      console.log(`Matched ${homeTeam} vs ${awayTeam} by team pairing → fixture ${best.id}`)
+    } else if (teamMatches.length > 1) {
+      for (const fixture of teamMatches) {
+        const delta = Math.abs(new Date(fixture.kickoff_utc).getTime() - apiTime)
+        if (!best || delta < best.delta) {
+          best = { id: fixture.id, game_day: fixture.game_day, delta }
+        }
+      }
+    }
+  }
+
   if (!best) return null
 
-  if (best.delta > KICKOFF_MATCH_MS) {
+  if (!matchedByTeamPairing && best.delta > KICKOFF_MATCH_MS) {
     console.log(
       `Rejected ${homeTeam} vs ${awayTeam}: kickoff mismatch (${Math.round(best.delta / 3600000)}h)`
     )
@@ -228,6 +302,13 @@ async function fetchFinishedApiFixtures(from: string, to: string): Promise<ApiFo
   )
 }
 
+async function fetchRecentFinishedFixtures(limit = 15): Promise<ApiFootballFixture[]> {
+  const { league, season } = getApiFootballConfig()
+  return fetchApiFootball(
+    `/fixtures?league=${league}&season=${season}&status=FT-AET-PEN&last=${limit}`
+  )
+}
+
 export async function runSyncResults(options?: { force?: boolean }): Promise<SyncResult> {
   const supabase = getSupabaseAdmin()
   const now = new Date()
@@ -296,22 +377,30 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
     }
   }
 
+  if (options?.force && (await trackApiRequest())) {
+    const recentFinished = await fetchRecentFinishedFixtures()
+    for (const apiFix of recentFinished) {
+      apiFixturesById.set(apiFix.fixture.id, apiFix)
+    }
+  }
+
   let updatedCount = 0
   let finishedSeen = 0
   const unmatched: string[] = []
   const affectedGameDays: number[] = []
 
-  for (const apiFix of apiFixturesById.values()) {
+  const sortedFixtures = [...apiFixturesById.values()].sort(
+    (a, b) => new Date(b.fixture.date).getTime() - new Date(a.fixture.date).getTime()
+  )
+
+  for (const apiFix of sortedFixtures) {
     const apiFixtureId = apiFix.fixture.id
-    const apiStatus = apiFix.fixture.status.short
-    const homeScore = apiFix.goals.home
-    const awayScore = apiFix.goals.away
     const homeTeam = apiFix.teams.home.name
     const awayTeam = apiFix.teams.away.name
+    const scores = extractFinishedScores(apiFix)
+    if (!scores) continue
 
-    if (!FINISHED_STATUSES.includes(apiStatus)) continue
-    if (homeScore === null || awayScore === null) continue
-
+    const { home: homeScore, away: awayScore } = scores
     finishedSeen++
 
     const ourFixtureId = await findOurFixtureId(
