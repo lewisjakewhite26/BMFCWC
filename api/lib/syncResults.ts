@@ -4,8 +4,6 @@ import { checkAndAutoCompleteMatchdays } from './autoProgression.js'
 
 const MAX_DAILY_REQUESTS = 80
 const FINISHED_STATUSES = ['FT', 'AET', 'PEN']
-const KICKOFF_MATCH_MS = 48 * 60 * 60 * 1000
-
 interface ApiFootballScoreline {
   home: number | null
   away: number | null
@@ -94,108 +92,45 @@ function teamsMatch(dbHome: string, dbAway: string, apiHome: string, apiAway: st
 
   const homeOk = dh === ah || dh.includes(ah) || ah.includes(dh)
   const awayOk = da === aa || da.includes(aa) || aa.includes(da)
-  return homeOk && awayOk
+  if (homeOk && awayOk) return true
+
+  // API home/away can differ from our seed — match on the same pair either way
+  const homeFlipped = dh === aa || dh.includes(aa) || aa.includes(dh)
+  const awayFlipped = da === ah || da.includes(ah) || ah.includes(da)
+  return homeFlipped && awayFlipped
 }
 
-function shiftDateString(date: string, days: number): string {
-  const shifted = new Date(`${date}T12:00:00.000Z`)
-  shifted.setUTCDate(shifted.getUTCDate() + days)
-  return shifted.toISOString().split('T')[0]
-}
+function findApiFixtureByTeams(
+  dbHome: string,
+  dbAway: string,
+  apiFixtures: ApiFootballFixture[]
+): ApiFootballFixture | null {
+  let best: { fixture: ApiFootballFixture; delta: number } | null = null
 
-async function findOurFixtureId(
-  apiFixtureId: number,
-  homeTeam: string,
-  awayTeam: string,
-  apiKickoff: string
-): Promise<number | null> {
-  const supabase = getSupabaseAdmin()
-
-  const { data: mapping } = await supabase
-    .from('fixture_api_mapping')
-    .select('fixture_id')
-    .eq('api_fixture_id', apiFixtureId)
-    .maybeSingle()
-
-  if (mapping?.fixture_id) return mapping.fixture_id
-
-  const apiTime = new Date(apiKickoff).getTime()
-  const windowStart = new Date(apiTime - KICKOFF_MATCH_MS).toISOString()
-  const windowEnd = new Date(apiTime + KICKOFF_MATCH_MS).toISOString()
-
-  const { data: candidates } = await supabase
-    .from('fixtures')
-    .select('id, home_team, away_team, kickoff_utc, game_day')
-    .neq('status', 'completed')
-    .gte('kickoff_utc', windowStart)
-    .lte('kickoff_utc', windowEnd)
-
-  let best: { id: number; game_day: number; delta: number } | null = null
-  let matchedByTeamPairing = false
-
-  for (const fixture of candidates ?? []) {
-    if (!teamsMatch(fixture.home_team, fixture.away_team, homeTeam, awayTeam)) {
+  for (const apiFix of apiFixtures) {
+    if (!teamsMatch(dbHome, dbAway, apiFix.teams.home.name, apiFix.teams.away.name)) {
       continue
     }
-
-    const delta = Math.abs(new Date(fixture.kickoff_utc).getTime() - apiTime)
-    if (!best || delta < best.delta) {
-      best = { id: fixture.id, game_day: fixture.game_day, delta: delta }
+    const delta = Date.now() - new Date(apiFix.fixture.date).getTime()
+    const recency = delta >= 0 ? delta : Number.MAX_SAFE_INTEGER
+    if (!best || recency < best.delta) {
+      best = { fixture: apiFix, delta: recency }
     }
   }
 
-  if (!best) {
-    const { data: allIncomplete } = await supabase
-      .from('fixtures')
-      .select('id, home_team, away_team, kickoff_utc, game_day')
-      .neq('status', 'completed')
-
-    const teamMatches = (allIncomplete ?? []).filter((fixture) =>
-      teamsMatch(fixture.home_team, fixture.away_team, homeTeam, awayTeam)
-    )
-
-    if (teamMatches.length === 1) {
-      matchedByTeamPairing = true
-      best = {
-        id: teamMatches[0].id,
-        game_day: teamMatches[0].game_day,
-        delta: Math.abs(new Date(teamMatches[0].kickoff_utc).getTime() - apiTime),
-      }
-      console.log(`Matched ${homeTeam} vs ${awayTeam} by team pairing → fixture ${best.id}`)
-    } else if (teamMatches.length > 1) {
-      for (const fixture of teamMatches) {
-        const delta = Math.abs(new Date(fixture.kickoff_utc).getTime() - apiTime)
-        if (!best || delta < best.delta) {
-          best = { id: fixture.id, game_day: fixture.game_day, delta }
-        }
-      }
-    }
-  }
-
-  if (!best) return null
-
-  if (!matchedByTeamPairing && best.delta > KICKOFF_MATCH_MS) {
-    console.log(
-      `Rejected ${homeTeam} vs ${awayTeam}: kickoff mismatch (${Math.round(best.delta / 3600000)}h)`
-    )
-    return null
-  }
-
-  await supabase.from('fixture_api_mapping').upsert(
-    { fixture_id: best.id, api_fixture_id: apiFixtureId },
-    { onConflict: 'api_fixture_id' }
-  )
-
-  console.log(`Mapped API ${apiFixtureId} → fixture ${best.id} (game_day ${best.game_day})`)
-  return best.id
+  return best?.fixture ?? null
 }
 
 export interface SyncResult {
   success: boolean
   skipped?: boolean
   reason?: string
+  message?: string
   updated?: number
   finishedSeen?: number
+  fetched?: number
+  pendingDb?: number
+  repaired?: number
   unmatched?: string[]
   requestCount?: number
 }
@@ -239,25 +174,6 @@ async function hasActiveFixtures(now: Date): Promise<boolean> {
   return (activeFixtures?.length ?? 0) > 0 || (recentIncomplete?.length ?? 0) > 0
 }
 
-async function getSyncDates(now: Date): Promise<string[]> {
-  const supabase = getSupabaseAdmin()
-  const dates = new Set<string>([todayDateString()])
-  const lookbackStart = new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString()
-
-  const { data } = await supabase
-    .from('fixtures')
-    .select('kickoff_utc')
-    .gte('kickoff_utc', lookbackStart)
-    .lte('kickoff_utc', now.toISOString())
-    .neq('status', 'completed')
-
-  for (const row of data ?? []) {
-    dates.add(row.kickoff_utc.split('T')[0])
-  }
-
-  return [...dates].sort()
-}
-
 function apiFootballHeaders(apiKey: string): Record<string, string> {
   return {
     'x-apisports-key': apiKey,
@@ -280,33 +196,139 @@ function getApiFootballConfig(): { apiKey: string; baseUrl: string; league: stri
 
 async function fetchApiFootball(path: string): Promise<ApiFootballFixture[]> {
   const { apiKey, baseUrl } = getApiFootballConfig()
-  const response = await fetch(`${baseUrl}${path}`, { headers: apiFootballHeaders(apiKey) })
+  const normalizedBase = baseUrl.replace(/\/$/, '')
+  const response = await fetch(`${normalizedBase}${path}`, { headers: apiFootballHeaders(apiKey) })
 
   if (!response.ok) {
     throw new Error(`API-Football responded with ${response.status}`)
   }
 
-  const data = await response.json()
-  return (data.response ?? []) as ApiFootballFixture[]
+  const data = (await response.json()) as {
+    response?: ApiFootballFixture[]
+    errors?: Record<string, string>
+    message?: string
+  }
+
+  const apiErrors = data.errors ?? {}
+  const errorText = Object.values(apiErrors).filter(Boolean).join('; ')
+  if (errorText) {
+    throw new Error(`API-Football error: ${errorText}`)
+  }
+
+  return data.response ?? []
 }
 
-async function fetchApiFixtures(date: string): Promise<ApiFootballFixture[]> {
+async function fetchAllSeasonFixtures(): Promise<ApiFootballFixture[]> {
   const { league, season } = getApiFootballConfig()
-  return fetchApiFootball(`/fixtures?league=${league}&season=${season}&date=${date}`)
+  return fetchApiFootball(`/fixtures?league=${league}&season=${season}`)
 }
 
-async function fetchFinishedApiFixtures(from: string, to: string): Promise<ApiFootballFixture[]> {
-  const { league, season } = getApiFootballConfig()
-  return fetchApiFootball(
-    `/fixtures?league=${league}&season=${season}&from=${from}&to=${to}&status=FT-AET-PEN`
-  )
+interface DbFixtureRow {
+  id: number
+  home_team: string
+  away_team: string
+  kickoff_utc: string
+  status: string
+  home_score: number | null
+  away_score: number | null
 }
 
-async function fetchRecentFinishedFixtures(limit = 15): Promise<ApiFootballFixture[]> {
-  const { league, season } = getApiFootballConfig()
-  return fetchApiFootball(
-    `/fixtures?league=${league}&season=${season}&status=FT-AET-PEN&last=${limit}`
-  )
+async function getDbFixturesNeedingScores(now: Date): Promise<DbFixtureRow[]> {
+  const supabase = getSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('fixtures')
+    .select('id, home_team, away_team, kickoff_utc, status, home_score, away_score')
+    .lte('kickoff_utc', now.toISOString())
+    .neq('status', 'completed')
+
+  if (error) throw error
+  return data ?? []
+}
+
+async function repairCompletedFixturePoints(): Promise<number> {
+  const supabase = getSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('fixtures')
+    .select('id, home_score, away_score')
+    .eq('status', 'completed')
+    .not('home_score', 'is', null)
+    .not('away_score', 'is', null)
+
+  if (error) throw error
+
+  let repaired = 0
+  for (const fixture of data ?? []) {
+    const { count } = await supabase
+      .from('predictions')
+      .select('id', { count: 'exact', head: true })
+      .eq('fixture_id', fixture.id)
+
+    if (!count) continue
+
+    const { count: scoredCount } = await supabase
+      .from('predictions')
+      .select('id', { count: 'exact', head: true })
+      .eq('fixture_id', fixture.id)
+      .gt('points_awarded', 0)
+
+    if ((scoredCount ?? 0) > 0) continue
+
+    await calculatePoints(fixture.id, fixture.home_score!, fixture.away_score!)
+    repaired++
+  }
+
+  return repaired
+}
+
+async function applyScoresFromApiSnapshot(
+  apiFixtures: ApiFootballFixture[],
+  now: Date
+): Promise<{
+  updated: number
+  finishedSeen: number
+  pendingDb: number
+  unmatched: string[]
+  affectedGameDays: number[]
+}> {
+  const supabase = getSupabaseAdmin()
+  const dbFixtures = await getDbFixturesNeedingScores(now)
+  let updated = 0
+  const unmatched: string[] = []
+  const affectedGameDays: number[] = []
+
+  const finishedApi = apiFixtures.filter((apiFix) => extractFinishedScores(apiFix) !== null)
+  const finishedSeen = finishedApi.length
+
+  for (const dbFixture of dbFixtures) {
+    const apiFix = findApiFixtureByTeams(dbFixture.home_team, dbFixture.away_team, finishedApi)
+    if (!apiFix) {
+      unmatched.push(`${dbFixture.home_team} vs ${dbFixture.away_team}`)
+      continue
+    }
+
+    const scores = extractFinishedScores(apiFix)!
+    await supabase.from('fixture_api_mapping').upsert(
+      { fixture_id: dbFixture.id, api_fixture_id: apiFix.fixture.id },
+      { onConflict: 'api_fixture_id' }
+    )
+
+    const { data: row } = await supabase
+      .from('fixtures')
+      .select('game_day')
+      .eq('id', dbFixture.id)
+      .single()
+
+    await calculatePoints(dbFixture.id, scores.home, scores.away)
+    updated++
+    if (row?.game_day != null) {
+      affectedGameDays.push(row.game_day)
+    }
+    console.log(
+      `Updated fixture ${dbFixture.id}: ${dbFixture.home_team} ${scores.home}-${scores.away} ${dbFixture.away_team}`
+    )
+  }
+
+  return { updated, finishedSeen, pendingDb: dbFixtures.length, unmatched, affectedGameDays }
 }
 
 export async function runSyncResults(options?: { force?: boolean }): Promise<SyncResult> {
@@ -346,8 +368,6 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
     }
   }
 
-  const syncDates = await getSyncDates(now)
-  const apiFixturesById = new Map<number, ApiFootballFixture>()
   let requestCount = currentCount
 
   const trackApiRequest = async (): Promise<boolean> => {
@@ -360,91 +380,43 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
     return true
   }
 
-  for (const syncDate of syncDates) {
-    if (!(await trackApiRequest())) break
-    const dayFixtures = await fetchApiFixtures(syncDate)
-    for (const apiFix of dayFixtures) {
-      apiFixturesById.set(apiFix.fixture.id, apiFix)
+  if (!(await trackApiRequest())) {
+    return {
+      success: true,
+      skipped: true,
+      reason: 'Daily limit reached',
+      requestCount,
     }
   }
 
-  const fromDate = shiftDateString(syncDates[0], -1)
-  const toDate = shiftDateString(syncDates[syncDates.length - 1], 1)
-  if (await trackApiRequest()) {
-    const finishedFixtures = await fetchFinishedApiFixtures(fromDate, toDate)
-    for (const apiFix of finishedFixtures) {
-      apiFixturesById.set(apiFix.fixture.id, apiFix)
-    }
+  const seasonFixtures = await fetchAllSeasonFixtures()
+  const snapshot = await applyScoresFromApiSnapshot(seasonFixtures, now)
+
+  let repaired = 0
+  if (options?.force) {
+    repaired = await repairCompletedFixturePoints()
   }
 
-  if (options?.force && (await trackApiRequest())) {
-    const recentFinished = await fetchRecentFinishedFixtures()
-    for (const apiFix of recentFinished) {
-      apiFixturesById.set(apiFix.fixture.id, apiFix)
-    }
-  }
+  await checkAndAutoCompleteMatchdays(snapshot.affectedGameDays)
 
-  let updatedCount = 0
-  let finishedSeen = 0
-  const unmatched: string[] = []
-  const affectedGameDays: number[] = []
-
-  const sortedFixtures = [...apiFixturesById.values()].sort(
-    (a, b) => new Date(b.fixture.date).getTime() - new Date(a.fixture.date).getTime()
-  )
-
-  for (const apiFix of sortedFixtures) {
-    const apiFixtureId = apiFix.fixture.id
-    const homeTeam = apiFix.teams.home.name
-    const awayTeam = apiFix.teams.away.name
-    const scores = extractFinishedScores(apiFix)
-    if (!scores) continue
-
-    const { home: homeScore, away: awayScore } = scores
-    finishedSeen++
-
-    const ourFixtureId = await findOurFixtureId(
-      apiFixtureId,
-      homeTeam,
-      awayTeam,
-      apiFix.fixture.date
-    )
-    if (!ourFixtureId) {
-      const label = `${homeTeam} vs ${awayTeam}`
-      unmatched.push(label)
-      console.log(`No match found for ${label} (${apiFix.fixture.date})`)
-      continue
-    }
-
-    const { data: ourFixture } = await supabase
-      .from('fixtures')
-      .select('status, game_day')
-      .eq('id', ourFixtureId)
-      .single()
-
-    if (ourFixture?.status === 'completed') continue
-
-    await calculatePoints(ourFixtureId, homeScore, awayScore)
-    updatedCount++
-    if (ourFixture?.game_day != null) {
-      affectedGameDays.push(ourFixture.game_day)
-    }
-    console.log(
-      `Updated game_day ${ourFixture?.game_day}: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam}`
-    )
-  }
-
-  await checkAndAutoCompleteMatchdays(affectedGameDays)
-
+  const updatedCount = snapshot.updated + repaired
   let message =
     updatedCount > 0
       ? `Updated ${updatedCount} fixture${updatedCount === 1 ? '' : 's'}`
       : 'No new results to apply'
 
-  if (updatedCount === 0 && finishedSeen > 0 && unmatched.length > 0) {
-    message = `${finishedSeen} finished in API, 0 matched (e.g. ${unmatched.slice(0, 2).join(', ')})`
-  } else if (updatedCount === 0 && finishedSeen > 0) {
-    message = `${finishedSeen} finished in API, already scored`
+  if (updatedCount === 0) {
+    if (seasonFixtures.length === 0) {
+      message = 'API returned 0 fixtures — check API_FOOTBALL_KEY, league and season env vars'
+    } else if (snapshot.finishedSeen === 0) {
+      message = `API has ${seasonFixtures.length} fixtures but none marked finished yet`
+    } else if (snapshot.pendingDb === 0) {
+      message = `${snapshot.finishedSeen} finished in API — all kicked-off fixtures already scored`
+    } else if (snapshot.unmatched.length > 0) {
+      message = `${snapshot.pendingDb} need scores, 0 matched API (e.g. ${snapshot.unmatched.slice(0, 2).join(', ')})`
+    } else {
+      message = `${snapshot.finishedSeen} finished in API, already scored`
+    }
   }
 
   await supabase.rpc('update_api_sync_log', {
@@ -455,9 +427,13 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
 
   return {
     success: true,
+    message,
     updated: updatedCount,
-    finishedSeen,
-    unmatched: unmatched.length > 0 ? unmatched : undefined,
+    fetched: seasonFixtures.length,
+    finishedSeen: snapshot.finishedSeen,
+    pendingDb: snapshot.pendingDb,
+    repaired: repaired > 0 ? repaired : undefined,
+    unmatched: snapshot.unmatched.length > 0 ? snapshot.unmatched : undefined,
     requestCount,
   }
 }

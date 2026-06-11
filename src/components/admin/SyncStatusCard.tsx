@@ -130,6 +130,7 @@ export function SyncStatusCard({ devMode = false }: SyncStatusCardProps) {
         error?: string
         skipped?: boolean
         reason?: string
+        message?: string
         updated?: number
         unmatched?: string[]
       }>(res)
@@ -141,11 +142,13 @@ export function SyncStatusCard({ devMode = false }: SyncStatusCardProps) {
       if (data.skipped) {
         toast(data.reason ?? 'Sync skipped', { icon: 'ℹ️' })
       } else if ((data.updated ?? 0) > 0) {
-        toast.success(`Synced — ${data.updated} fixture(s) updated`)
+        toast.success(data.message ?? `Synced — ${data.updated} fixture(s) updated`)
+      } else if (data.message) {
+        toast(data.message, { icon: 'ℹ️' })
       } else if (data.unmatched?.length) {
         toast(`API results found but not matched: ${data.unmatched.slice(0, 2).join(', ')}`, { icon: '⚠️' })
       } else {
-        toast.success('Sync complete — no new results')
+        toast('Sync complete — no new results', { icon: 'ℹ️' })
       }
       await load()
     } catch (err) {
