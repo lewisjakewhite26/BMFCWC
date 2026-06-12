@@ -117,9 +117,69 @@ export function canUseHaptics(): boolean {
 }
 
 export function cancelHaptic(): void {
-  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-    navigator.vibrate(0)
+  if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return
+  navigator.vibrate(0)
+  navigator.vibrate([])
+}
+
+let easterEggCancelHandler: (() => void) | null = null
+let easterEggCleanup: (() => void)[] = []
+
+export function registerEasterEggCancelHandler(handler: (() => void) | null): void {
+  easterEggCancelHandler = handler
+}
+
+function disarmEasterEggCancel(): void {
+  for (const cleanup of easterEggCleanup) cleanup()
+  easterEggCleanup = []
+}
+
+function cancelEasterEggPlayback(): void {
+  cancelHaptic()
+  disarmEasterEggCancel()
+  easterEggCancelHandler?.()
+}
+
+function armEasterEggCancel(): void {
+  disarmEasterEggCancel()
+  const armedAt = performance.now()
+  const GRACE_MS = 150
+
+  const tryCancel = () => {
+    if (performance.now() - armedAt < GRACE_MS) return
+    cancelEasterEggPlayback()
   }
+
+  const opts: AddEventListenerOptions = { capture: true, passive: true }
+  const events = ['touchstart', 'touchmove', 'pointerdown', 'pointermove', 'scroll', 'wheel'] as const
+
+  for (const target of [document, window]) {
+    for (const event of events) {
+      target.addEventListener(event, tryCancel, opts)
+      easterEggCleanup.push(() => target.removeEventListener(event, tryCancel, opts))
+    }
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('scroll', tryCancel, opts)
+    easterEggCleanup.push(() => window.visualViewport?.removeEventListener('scroll', tryCancel, opts))
+  }
+
+  let lastX = window.scrollX
+  let lastY = window.scrollY
+  const scrollPoll = window.setInterval(() => {
+    const x = window.scrollX
+    const y = window.scrollY
+    if (Math.abs(x - lastX) > 2 || Math.abs(y - lastY) > 2) {
+      tryCancel()
+    }
+    lastX = x
+    lastY = y
+  }, 48)
+  easterEggCleanup.push(() => window.clearInterval(scrollPoll))
+
+  const maxDuration = window.setTimeout(disarmEasterEggCancel, 16_000)
+  easterEggCleanup.push(() => window.clearTimeout(maxDuration))
 }
 
 export function triggerHaptic(id: HapticId, { force = false } = {}): void {
@@ -169,10 +229,18 @@ export const EASTER_EGG_TRACKS: Record<EasterEggHapticId, { title: string; artis
   liquidator: { title: 'Liquidator', artist: 'Harry J Allstars' },
 }
 
-export function hapticRandomEasterEgg(): EasterEggHapticId {
+export function playRandomEasterEgg(): EasterEggHapticId {
   const id = EASTER_EGG_IDS[Math.floor(Math.random() * EASTER_EGG_IDS.length)]
-  triggerHaptic(id, { force: true })
+  if (!canUseHaptics()) return id
+
+  cancelHaptic()
+  armEasterEggCancel()
+  navigator.vibrate(PATTERNS[id])
   return id
+}
+
+export function hapticRandomEasterEgg(): EasterEggHapticId {
+  return playRandomEasterEgg()
 }
 
 export function hapticRecapSpotOn() {

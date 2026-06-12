@@ -57,7 +57,7 @@ export default function PreviousPredictions() {
             </div>
           ) : gameDays.length === 0 ? (
             <div className="glass-card p-8 text-center">
-              <p className="text-gray-500">No completed matchdays yet. Your results will appear here once the first round is scored.</p>
+              <p className="text-gray-500">No results yet. Your scored predictions will appear here as each fixture is confirmed.</p>
             </div>
           ) : (
             <div className="space-y-3">
