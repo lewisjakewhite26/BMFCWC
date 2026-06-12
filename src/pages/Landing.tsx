@@ -6,7 +6,6 @@ import { ClubLogo } from '../components/ui/ClubLogo'
 import { PageShell } from '../components/ui/PageBackground'
 import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { usePrizePot } from '../hooks/usePrizePot'
-import { hapticRandomEasterEgg } from '../lib/haptics'
 import { EasterEggTrackToast } from '../components/ui/EasterEggTrackToast'
 import { useEasterEggTrackToast } from '../hooks/useEasterEggTrackToast'
 
