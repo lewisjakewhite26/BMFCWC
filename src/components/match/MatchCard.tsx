@@ -58,8 +58,8 @@ export function MatchCard({
 
   const persist = useCallback(async (home: number, away: number) => {
     if (!onSave) throw new Error('Save unavailable')
-    await onSave(home, away)
-  }, [onSave])
+    await onSave(fixture.id, home, away)
+  }, [fixture.id, onSave])
 
   const tryAutoSubmit = useCallback(
     async (home: number, away: number) => {
