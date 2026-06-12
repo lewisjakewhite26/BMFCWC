@@ -153,6 +153,16 @@ const EASTER_EGG_IDS: EasterEggHapticId[] = [
   'liquidator',
 ]
 
+export const EASTER_EGG_TRACKS: Record<EasterEggHapticId, { title: string; artist: string }> = {
+  vindaloo: { title: 'Vindaloo', artist: 'Fat Les' },
+  worldInMotion: { title: 'World in Motion', artist: 'New Order' },
+  tomHark: { title: 'Tom Hark', artist: 'The Piranhas' },
+  threeLions: { title: 'Three Lions', artist: 'Baddiel, Skinner & Lightning Seeds' },
+  freedFromDesire: { title: 'Freed from Desire', artist: 'Gala' },
+  heyJude: { title: 'Hey Jude', artist: 'The Beatles' },
+  liquidator: { title: 'Liquidator', artist: 'Harry J Allstars' },
+}
+
 export function hapticRandomEasterEgg(): EasterEggHapticId {
   const id = EASTER_EGG_IDS[Math.floor(Math.random() * EASTER_EGG_IDS.length)]
   triggerHaptic(id, { force: true })

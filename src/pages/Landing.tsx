@@ -7,6 +7,8 @@ import { PageShell } from '../components/ui/PageBackground'
 import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { usePrizePot } from '../hooks/usePrizePot'
 import { hapticRandomEasterEgg } from '../lib/haptics'
+import { EasterEggTrackToast } from '../components/ui/EasterEggTrackToast'
+import { useEasterEggTrackToast } from '../hooks/useEasterEggTrackToast'
 
 const POINTER_LERP = 0.044
 const POINTER_FADE = 0.036
@@ -401,10 +403,11 @@ export default function Landing() {
   const heroRef = useRef<HTMLElement>(null)
   const [showScrollHint, setShowScrollHint] = useState(true)
   const [crestPulse, setCrestPulse] = useState(false)
+  const { track: easterEggTrack, trigger: triggerEasterEgg } = useEasterEggTrackToast()
   const { stats: prizePot, loading: prizePotLoading } = usePrizePot()
 
   const handleCrestClick = () => {
-    hapticRandomEasterEgg()
+    triggerEasterEgg()
     setCrestPulse(true)
     window.setTimeout(() => setCrestPulse(false), 900)
   }
@@ -419,6 +422,7 @@ export default function Landing() {
 
   return (
     <PageShell>
+      <EasterEggTrackToast track={easterEggTrack} />
       <Navbar />
 
       <div className="bg-[#f0f4ff]">

@@ -14,7 +14,9 @@ import { fetchGroupStageGameDays, fetchOpenGameDay, fetchFixturesByGameDay } fro
 import { getDefaultGroupTab, getMatchdayTabState } from '../lib/matchdays'
 import { getEarliestKickoff } from '../lib/scoring'
 import { getTimeGreeting } from '../lib/greeting'
-import { hapticMatchdayLocked, hapticRandomEasterEgg } from '../lib/haptics'
+import { hapticMatchdayLocked } from '../lib/haptics'
+import { EasterEggTrackToast } from '../components/ui/EasterEggTrackToast'
+import { useEasterEggTrackToast } from '../hooks/useEasterEggTrackToast'
 import { isDevBypassSession, MOCK_GAME_DAYS, getMockFixturesByGameDay } from '../lib/devBypass'
 import { useMatchdayRecap } from '../hooks/useMatchdayRecap'
 import { MatchdayRecapModal } from '../components/dashboard/MatchdayRecapModal'
@@ -33,6 +35,7 @@ export default function Dashboard() {
   const [loadingDays, setLoadingDays] = useState(true)
   const [lockedFixtures, setLockedFixtures] = useState<Set<number>>(new Set())
   const [nameEasterEggLine, setNameEasterEggLine] = useState<string | null>(null)
+  const { track: easterEggTrack, trigger: triggerEasterEgg, hapticsSupported } = useEasterEggTrackToast()
   const groupPrevPredictionCount = useRef<number | null>(null)
   const knockoutPrevCount = useRef<number | null>(null)
 
@@ -166,7 +169,10 @@ export default function Dashboard() {
   ]
 
   const handleNameClick = () => {
-    hapticRandomEasterEgg()
+    if (hapticsSupported) {
+      triggerEasterEgg()
+      return
+    }
     const line = NAME_EASTER_EGG_LINES[Math.floor(Math.random() * NAME_EASTER_EGG_LINES.length)]
     setNameEasterEggLine(line)
     window.setTimeout(() => setNameEasterEggLine(null), 2800)
@@ -174,6 +180,7 @@ export default function Dashboard() {
 
   return (
     <PageShell>
+      <EasterEggTrackToast track={easterEggTrack} />
       {visible && recap && tier && (
         <MatchdayRecapModal
           recap={recap}
