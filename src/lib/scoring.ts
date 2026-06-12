@@ -84,11 +84,17 @@ export function getNextFixtureCutoff(
   return new Date(Math.min(...cutoffs))
 }
 
+/** True when within 24 hours of the fixture prediction cutoff */
+export function shouldShowFixtureLockCountdown(kickoffUtc: string, now = Date.now()): boolean {
+  const remaining = getFixtureCutoff(kickoffUtc).getTime() - now
+  return remaining > 0 && remaining <= LOCK_COUNTDOWN_WINDOW_MS
+}
+
 /** Returns "locks in 2h 15m" when within 24 hours of the fixture cutoff, otherwise null */
 export function getFixtureLockCountdownText(kickoffUtc: string, now = Date.now()): string | null {
-  const remaining = getFixtureCutoff(kickoffUtc).getTime() - now
-  if (remaining <= 0 || remaining > LOCK_COUNTDOWN_WINDOW_MS) return null
+  if (!shouldShowFixtureLockCountdown(kickoffUtc, now)) return null
 
+  const remaining = getFixtureCutoff(kickoffUtc).getTime() - now
   const totalMinutes = Math.ceil(remaining / 60_000)
   const hours = Math.floor(totalMinutes / 60)
   const minutes = totalMinutes % 60

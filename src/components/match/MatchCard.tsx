@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { MatchScoreLine } from './MatchScoreLine'
 import { PointsBadge } from './PointsBadge'
-import { formatKickoffLocal, getFixtureLockCountdownText, getStageLabel } from '../../lib/scoring'
+import { formatKickoffLocal, getStageLabel } from '../../lib/scoring'
+import { FixtureLockCountdown } from './FixtureLockCountdown'
 import { hapticTap } from '../../lib/haptics'
 import type { Fixture, Prediction } from '../../types'
 
@@ -24,9 +25,6 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
   const [confirmed, setConfirmed] = useState(() => !!prediction)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [locking, setLocking] = useState(false)
-  const [lockCountdown, setLockCountdown] = useState<string | null>(() =>
-    locked ? null : getFixtureLockCountdownText(fixture.kickoff_utc)
-  )
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastSaved = useRef({ home: prediction?.predicted_home, away: prediction?.predicted_away })
   const userHasEdited = useRef(false)
@@ -45,21 +43,6 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
   useEffect(() => {
     onConfirmChange?.(fixture.id, confirmed)
   }, [confirmed, fixture.id, onConfirmChange])
-
-  useEffect(() => {
-    if (locked) {
-      setLockCountdown(null)
-      return
-    }
-
-    const tick = () => {
-      setLockCountdown(getFixtureLockCountdownText(fixture.kickoff_utc))
-    }
-
-    tick()
-    const id = window.setInterval(tick, 30_000)
-    return () => window.clearInterval(id)
-  }, [fixture.kickoff_utc, locked])
 
   const persist = useCallback(async (home: number, away: number) => {
     if (!onSave) return
@@ -231,11 +214,10 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
         </button>
       )}
 
+      {editable && <FixtureLockCountdown kickoffUtc={fixture.kickoff_utc} />}
+
       <p className="text-center text-[11px] sm:text-xs text-gray-500 mt-3 leading-relaxed">
         {formatKickoffLocal(fixture.kickoff_utc)} · {fixture.city}
-        {lockCountdown && (
-          <span className="block text-[10px] text-gray-400 mt-0.5">{lockCountdown}</span>
-        )}
       </p>
 
       {hasResult && (

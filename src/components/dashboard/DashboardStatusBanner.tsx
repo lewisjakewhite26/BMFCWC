@@ -1,130 +1,85 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { formatCutoffLocal } from '../../lib/scoring'
+import {
+  countdownContainerClass,
+  countdownValueClass,
+  formatCountdownClock,
+  getCountdownUrgency,
+} from '../../lib/countdown'
 import { hapticCelebrate } from '../../lib/haptics'
 import type { MatchdayTabState } from '../../lib/matchdays'
 
 interface DashboardStatusBannerProps {
   lockedCount: number
   total: number
-  cutoff: Date | null
+  firstKickoff: Date | null
   hasOpenMatchday: boolean
   tabState?: MatchdayTabState
-  onExpired?: () => void
+  onKickoffReached?: () => void
 }
 
-const SIX_HOURS_MS = 6 * 60 * 60 * 1000
-const TWO_HOURS_MS = 2 * 60 * 60 * 1000
+type BannerTone = 'complete' | 'idle'
 
-type Urgency = 'expired' | 'critical' | 'warning' | 'normal' | 'complete' | 'idle'
-
-function getUrgency(remainingMs: number, allLocked: boolean): Urgency {
-  if (remainingMs <= 0) return 'expired'
-  if (allLocked) return 'complete'
-  if (remainingMs < TWO_HOURS_MS) return 'critical'
-  if (remainingMs < SIX_HOURS_MS) return 'warning'
-  return 'normal'
-}
-
-function bannerClass(urgency: Urgency): string {
-  switch (urgency) {
+function bannerClass(tone: BannerTone): string {
+  switch (tone) {
     case 'idle':
       return 'bg-gray-50/90 border border-gray-200/80'
-    case 'expired':
-      return 'bg-gray-100 border border-gray-200'
     case 'complete':
       return 'bg-emerald-50/90 border border-emerald-200/70'
-    case 'critical':
-      return 'bg-red-50 border border-red-200/80'
-    case 'warning':
-      return 'bg-amber-50 border border-amber-200/80'
     default:
       return 'bg-brand-blue/[0.06] border border-brand-blue/15'
   }
 }
 
-function countdownClass(urgency: Urgency): string {
-  switch (urgency) {
-    case 'expired':
-    case 'idle':
-      return 'text-gray-500'
-    case 'complete':
-      return 'text-emerald-700'
-    case 'critical':
-      return 'text-red-600'
-    case 'warning':
-      return 'text-amber-600'
-    default:
-      return 'text-brand-blue'
-  }
-}
-
-function pad(n: number): string {
-  return n.toString().padStart(2, '0')
-}
-
-function formatCountdown(ms: number): string {
-  if (ms <= 0) return 'Closed'
-
-  const totalSec = Math.max(0, Math.floor(ms / 1000))
-  const days = Math.floor(totalSec / 86400)
-  const hours = Math.floor((totalSec % 86400) / 3600)
-  const minutes = Math.floor((totalSec % 3600) / 60)
-  const seconds = totalSec % 60
-
-  if (days > 0) return `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-  if (hours > 0) return `${hours}:${pad(minutes)}:${pad(seconds)}`
-  return `${minutes}:${pad(seconds)}`
-}
-
 export function DashboardStatusBanner({
   lockedCount,
   total,
-  cutoff,
+  firstKickoff,
   hasOpenMatchday,
   tabState,
-  onExpired,
+  onKickoffReached,
 }: DashboardStatusBannerProps) {
-  const cutoffMs = cutoff?.getTime() ?? null
-  const allLocked = total > 0 && lockedCount === total
+  const kickoffMs = firstKickoff?.getTime() ?? null
+  const allSubmitted = total > 0 && lockedCount === total
   const progressPct = total > 0 ? Math.round((lockedCount / total) * 100) : 0
+  const showKickoffCountdown = kickoffMs !== null && kickoffMs > Date.now()
 
-  const [remaining, setRemaining] = useState(() =>
-    cutoffMs !== null ? cutoffMs - Date.now() : 0
+  const [kickoffRemaining, setKickoffRemaining] = useState(() =>
+    kickoffMs !== null ? kickoffMs - Date.now() : 0
   )
-  const expiredCalled = useRef(false)
+  const kickoffReachedCalled = useRef(false)
   const wasComplete = useRef(false)
-  const onExpiredRef = useRef(onExpired)
-  onExpiredRef.current = onExpired
+  const onKickoffReachedRef = useRef(onKickoffReached)
+  onKickoffReachedRef.current = onKickoffReached
 
   useEffect(() => {
-    expiredCalled.current = false
-  }, [cutoffMs])
+    kickoffReachedCalled.current = false
+  }, [kickoffMs])
 
   useEffect(() => {
-    if (cutoffMs === null) return
+    if (kickoffMs === null || !showKickoffCountdown) return
 
     const tick = () => {
-      const ms = cutoffMs - Date.now()
-      setRemaining(ms)
-      if (ms <= 0 && !expiredCalled.current) {
-        expiredCalled.current = true
-        onExpiredRef.current?.()
+      const ms = kickoffMs - Date.now()
+      setKickoffRemaining(ms)
+      if (ms <= 0 && !kickoffReachedCalled.current) {
+        kickoffReachedCalled.current = true
+        onKickoffReachedRef.current?.()
       }
     }
 
     tick()
     const id = window.setInterval(tick, 1000)
     return () => window.clearInterval(id)
-  }, [cutoffMs])
+  }, [kickoffMs, showKickoffCountdown])
 
   useEffect(() => {
-    if (allLocked && hasOpenMatchday && total > 0 && !wasComplete.current) {
+    if (allSubmitted && hasOpenMatchday && total > 0 && !wasComplete.current) {
       wasComplete.current = true
       hapticCelebrate()
     }
-    if (!allLocked) wasComplete.current = false
-  }, [allLocked, hasOpenMatchday, total])
+    if (!allSubmitted) wasComplete.current = false
+  }, [allSubmitted, hasOpenMatchday, total])
 
   if (tabState === 'complete') {
     return (
@@ -146,13 +101,12 @@ export function DashboardStatusBanner({
     )
   }
 
-  const urgency = getUrgency(remaining, allLocked && remaining > 0)
-  const showCountdown = cutoff !== null && cutoffMs !== null
+  const kickoffUrgency = getCountdownUrgency(kickoffRemaining)
 
   let statusLine: string
-  if (remaining <= 0 && tabState === 'closed') {
+  if (tabState === 'closed') {
     statusLine = 'All fixtures closed for predictions'
-  } else if (allLocked) {
+  } else if (allSubmitted) {
     statusLine = 'All predictions submitted'
   } else if (total === 0) {
     statusLine = 'Fixtures loading…'
@@ -162,41 +116,37 @@ export function DashboardStatusBanner({
 
   return (
     <div
-      className={`rounded-2xl px-4 py-3.5 space-y-3 ${bannerClass(urgency)}`}
+      className="rounded-2xl px-4 py-3.5 space-y-3 bg-white/60 border border-brand-blue/10"
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-wider font-semibold text-gray-500 mb-0.5">
-            This matchday
-          </p>
-          <p className="text-sm sm:text-base font-medium text-brand-navy leading-snug">
-            {statusLine}
-          </p>
-          {showCountdown && remaining > 0 && (
-            <p className="text-[11px] text-gray-400 mt-1 truncate">
-              Next fixture closes {formatCutoffLocal(cutoff!)}
-            </p>
-          )}
-        </div>
-        {showCountdown && (
-          <div className="text-right shrink-0">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">
-              {remaining <= 0 ? 'Cutoff' : 'Time left'}
-            </p>
-            <p className={`font-mono font-bold text-xl sm:text-2xl tabular-nums tracking-tight ${countdownClass(urgency)}`}>
-              {formatCountdown(remaining)}
-            </p>
-          </div>
-        )}
+      <div className="min-w-0">
+        <p className="text-[11px] uppercase tracking-wider font-semibold text-gray-500 mb-0.5">
+          This matchday
+        </p>
+        <p className="text-sm sm:text-base font-medium text-brand-navy leading-snug">
+          {statusLine}
+        </p>
       </div>
 
-      {total > 0 && remaining > 0 && (
-        <div className={`h-1.5 rounded-full overflow-hidden ${allLocked ? 'bg-emerald-200/50' : 'bg-brand-blue/10'}`}>
+      {showKickoffCountdown && (
+        <div className={`rounded-xl border px-3.5 py-3 ${countdownContainerClass(kickoffUrgency)}`}>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold text-gray-500">
+              First game begins in
+            </p>
+            <p className={`font-mono font-bold text-xl sm:text-2xl tabular-nums tracking-tight ${countdownValueClass(kickoffUrgency)}`}>
+              {formatCountdownClock(kickoffRemaining)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {total > 0 && (
+        <div className={`h-1.5 rounded-full overflow-hidden ${allSubmitted ? 'bg-emerald-200/50' : 'bg-brand-blue/10'}`}>
           <motion.div
             className={`h-full rounded-full ${
-              allLocked
+              allSubmitted
                 ? 'bg-gradient-to-r from-emerald-500 to-brand-gold'
                 : 'bg-brand-blue'
             }`}

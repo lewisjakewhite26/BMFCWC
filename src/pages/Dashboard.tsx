@@ -12,7 +12,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePredictions } from '../hooks/usePredictions'
 import { fetchGroupStageGameDays, fetchOpenGameDay, fetchFixturesByGameDay } from '../lib/fixtures'
 import { getDefaultGroupTab, getMatchdayTabState } from '../lib/matchdays'
-import { getNextFixtureCutoff } from '../lib/scoring'
+import { getEarliestKickoff } from '../lib/scoring'
 import { getTimeGreeting } from '../lib/greeting'
 import { isDevBypassSession, MOCK_GAME_DAYS, getMockFixturesByGameDay } from '../lib/devBypass'
 import { useMatchdayRecap } from '../hooks/useMatchdayRecap'
@@ -98,8 +98,8 @@ export default function Dashboard() {
 
   const lockedCount = fixtures.filter((f) => lockedFixtures.has(f.id)).length
   const loading = loadingDays || (loadingFixtures && fixtures.length === 0)
-  const cutoff = useMemo(
-    () => (selectedGameDay?.status === 'open' ? getNextFixtureCutoff(fixtures, true) : null),
+  const firstKickoff = useMemo(
+    () => (selectedGameDay?.status === 'open' ? getEarliestKickoff(fixtures) : null),
     [fixtures, selectedGameDay?.status]
   )
   const tabState = selectedGameDay
@@ -154,10 +154,10 @@ export default function Dashboard() {
               <DashboardStatusBanner
                 lockedCount={lockedCount}
                 total={fixtures.length}
-                cutoff={matchdayOpen ? cutoff : null}
+                firstKickoff={matchdayOpen ? firstKickoff : null}
                 hasOpenMatchday={matchdayOpen}
                 tabState={tabState}
-                onExpired={() => reload({ silent: true })}
+                onKickoffReached={() => reload({ silent: true })}
               />
             </>
           )
@@ -190,13 +190,13 @@ export default function Dashboard() {
                   knockoutPredictions.predictions.has(f.id)
                 ).length}
                 total={knockoutPredictions.fixtures.length}
-                cutoff={
+                firstKickoff={
                   knockoutGameDay.status === 'open' && knockoutPredictions.fixtures.length > 0
-                    ? getNextFixtureCutoff(knockoutPredictions.fixtures, true)
+                    ? getEarliestKickoff(knockoutPredictions.fixtures)
                     : null
                 }
                 hasOpenMatchday={knockoutGameDay.status === 'open'}
-                onExpired={() => knockoutPredictions.reload({ silent: true })}
+                onKickoffReached={() => knockoutPredictions.reload({ silent: true })}
               />
               <GameDayPanel
                 gameDay={knockoutGameDay}
