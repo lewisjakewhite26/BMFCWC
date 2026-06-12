@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { isDevBypassSession, MOCK_LEADERBOARD } from '../lib/devBypass'
+import { sortLeaderboardEntries } from '../lib/leaderboard'
 import { useAuth } from './useAuth'
 import type { LeaderboardEntry } from '../types'
 
@@ -17,7 +18,7 @@ export function useLeaderboard(limit?: number) {
 
     try {
       if (isDevBypassSession(user) || (!user && import.meta.env.DEV)) {
-        const data = limit ? MOCK_LEADERBOARD.slice(0, limit) : MOCK_LEADERBOARD
+        const data = sortLeaderboardEntries(limit ? MOCK_LEADERBOARD.slice(0, limit) : MOCK_LEADERBOARD)
         setEntries(data)
         return
       }
@@ -26,16 +27,17 @@ export function useLeaderboard(limit?: number) {
         .from('leaderboard_stats')
         .select('*')
         .order('total_points', { ascending: false })
+        .order('correct_scores', { ascending: false })
 
       if (limit) query = query.limit(limit)
 
       const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
-      setEntries(data ?? [])
+      setEntries(sortLeaderboardEntries(data ?? []))
     } catch (err) {
       if (import.meta.env.DEV) {
-        const data = limit ? MOCK_LEADERBOARD.slice(0, limit) : MOCK_LEADERBOARD
+        const data = sortLeaderboardEntries(limit ? MOCK_LEADERBOARD.slice(0, limit) : MOCK_LEADERBOARD)
         setEntries(data)
       } else {
         setError(err instanceof Error ? err.message : 'Failed to load leaderboard')

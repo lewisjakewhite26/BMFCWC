@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSpring, useTransform } from 'framer-motion'
 import { LeaderboardSkeleton } from '../ui/Skeleton'
+import { getLeaderboardRanks } from '../../lib/leaderboard'
 import type { LeaderboardEntry } from '../../types'
 
 function AnimatedPoints({ value }: { value: number }) {
@@ -44,7 +45,7 @@ const PODIUM_GRADIENTS: Record<number, string> = {
   3: 'linear-gradient(to bottom, #B87333, #D4A57A)',
 }
 
-function Podium({ entries }: { entries: LeaderboardEntry[] }) {
+function Podium({ entries, ranks }: { entries: LeaderboardEntry[]; ranks: Map<string, number> }) {
   const top3 = entries.slice(0, 3)
   if (top3.length === 0) return null
 
@@ -56,7 +57,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
   return (
     <div className="flex items-end justify-center gap-3 sm:gap-6 mb-6 sm:mb-8 px-2">
       {order.map((entry) => {
-        const rank = entries.indexOf(entry) + 1
+        const rank = ranks.get(entry.id) ?? entries.indexOf(entry) + 1
         const barHeight = minBar + (entry.total_points / maxPoints) * (maxBar - minBar)
         const gradient = PODIUM_GRADIENTS[rank]
 
@@ -129,10 +130,11 @@ export function Leaderboard({ entries, loading, currentUserId, compact = false }
 
   const tableEntries = compact ? entries : entries.slice(3)
   const showPodium = !compact && entries.length >= 1
+  const ranks = getLeaderboardRanks(entries)
 
   return (
     <div className="space-y-2">
-      {showPodium && <Podium entries={entries} />}
+      {showPodium && <Podium entries={entries} ranks={ranks} />}
 
       {!compact && entries.length > 3 && (
         <div className="flex items-center gap-3 sm:gap-4 px-4 py-2 text-xs text-gray-500 uppercase tracking-wider font-medium">
@@ -152,8 +154,8 @@ export function Leaderboard({ entries, loading, currentUserId, compact = false }
         </div>
       )}
 
-      {(compact ? entries : tableEntries).map((entry, i) => {
-        const rank = compact ? i + 1 : i + 4
+      {(compact ? entries : tableEntries).map((entry) => {
+        const rank = ranks.get(entry.id) ?? 0
         return (
           <LeaderboardRow
             key={entry.id}

@@ -119,6 +119,8 @@ You can remove obsolete Vercel env vars from older deploys: `API_FOOTBALL_*`, `C
 | Correct result (win / draw / loss) | 5 |
 | Wrong | 0 |
 
+**Tiebreaker:** If players finish level on points at the end of the tournament, the tiebreaker is the most exact scores predicted across all matchdays. If that is also level, those players are declared joint winners.
+
 ---
 
 ## Matchday flow

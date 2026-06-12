@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Navbar } from '../components/ui/Navbar'
 import { ClubLogo } from '../components/ui/ClubLogo'
+import { LEADERBOARD_TIEBREAKER_RULE } from '../lib/leaderboard'
 import { PageShell } from '../components/ui/PageBackground'
 import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { usePrizePot } from '../hooks/usePrizePot'
@@ -539,6 +540,11 @@ export default function Landing() {
                 </FadeUp>
               ))}
             </div>
+            <FadeUp delay={0.25}>
+              <p className="mt-8 text-center text-[#6B7280] text-[0.95rem] leading-relaxed max-w-2xl mx-auto">
+                {LEADERBOARD_TIEBREAKER_RULE}
+              </p>
+            </FadeUp>
           </div>
         </section>
       </div>

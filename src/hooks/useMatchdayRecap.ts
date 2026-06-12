@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchGameDays } from '../lib/fixtures'
 import { getDismissedRecaps, markRecapSeen } from '../lib/recapStorage'
 import { getRecapTier } from '../lib/recapTier'
+import { getLeaderboardRank, sortLeaderboardEntries } from '../lib/leaderboard'
 import {
   isDevBypassSession,
   getMockHistoryPredictions,
@@ -23,7 +24,7 @@ function buildDevRecap(gameDay: number): MatchdayRecap {
   const correct_scores = dayPreds.filter((p) => p.points_awarded === 10).length
   const correct_results = dayPreds.filter((p) => p.points_awarded === 5).length
 
-  const rankIndex = MOCK_LEADERBOARD.findIndex((e) => e.id === DEV_USER.id)
+  const sortedLeaderboard = sortLeaderboardEntries(MOCK_LEADERBOARD)
 
   return {
     game_day: gameDay,
@@ -33,9 +34,9 @@ function buildDevRecap(gameDay: number): MatchdayRecap {
     correct_results,
     predictions_count: dayPreds.length,
     matchday_rank: 2,
-    matchday_total_players: MOCK_LEADERBOARD.length,
-    overall_rank: rankIndex >= 0 ? rankIndex + 1 : 3,
-    overall_total_players: MOCK_LEADERBOARD.length,
+    matchday_total_players: sortedLeaderboard.length,
+    overall_rank: getLeaderboardRank(sortedLeaderboard, DEV_USER.id) ?? 3,
+    overall_total_players: sortedLeaderboard.length,
     total_points: DEV_USER.total_points,
   }
 }

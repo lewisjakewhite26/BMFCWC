@@ -8,6 +8,7 @@ import {
 } from '../lib/devBypass'
 import { useAuth } from './useAuth'
 import { useLeaderboard } from './useLeaderboard'
+import { getLeaderboardRank } from '../lib/leaderboard'
 import { useUserPredictions } from './usePredictions'
 
 export interface DashboardStats {
@@ -92,8 +93,8 @@ export function useDashboardStats() {
       }
     }
 
-    const rankIndex = entries.findIndex((e) => e.id === user.id)
-    const leaguePosition = entries.length > 0 && rankIndex >= 0 ? rankIndex + 1 : null
+    const leaguePosition =
+      entries.length > 0 ? getLeaderboardRank(entries, user.id) : null
     const leaderPoints = entries[0]?.total_points ?? totalPoints
     const pointsOffTop =
       leaguePosition === 1 ? 0 : Math.max(0, leaderPoints - totalPoints)

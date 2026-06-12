@@ -8,6 +8,7 @@ import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { usePrizePot } from '../hooks/usePrizePot'
 import { useAuth } from '../hooks/useAuth'
+import { LEADERBOARD_TIEBREAKER_RULE } from '../lib/leaderboard'
 import { ClubLogo } from '../components/ui/ClubLogo'
 
 export default function LeaderboardPage() {
@@ -30,6 +31,9 @@ export default function LeaderboardPage() {
             The Table
           </h1>
           <p className="text-gray-500 text-center mb-5">Updated after every result</p>
+          <p className="text-sm text-gray-500 text-center max-w-xl mx-auto mb-5 leading-relaxed">
+            {LEADERBOARD_TIEBREAKER_RULE}
+          </p>
 
           <div className="mb-5 sm:mb-8">
             <PrizePotBanner stats={prizePot} loading={prizePotLoading} />
