@@ -6,6 +6,7 @@ import { ClubLogo } from '../components/ui/ClubLogo'
 import { PageShell } from '../components/ui/PageBackground'
 import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { usePrizePot } from '../hooks/usePrizePot'
+import { previewHaptic } from '../lib/haptics'
 
 const POINTER_LERP = 0.044
 const POINTER_FADE = 0.036
@@ -399,7 +400,14 @@ function FadeUp({
 export default function Landing() {
   const heroRef = useRef<HTMLElement>(null)
   const [showScrollHint, setShowScrollHint] = useState(true)
+  const [crestPulse, setCrestPulse] = useState(false)
   const { stats: prizePot, loading: prizePotLoading } = usePrizePot()
+
+  const handleCrestClick = () => {
+    previewHaptic('matchdayLocked')
+    setCrestPulse(true)
+    window.setTimeout(() => setCrestPulse(false), 900)
+  }
 
   useEffect(() => {
     const onScroll = () => {
@@ -422,7 +430,16 @@ export default function Landing() {
           <LandingHeroBackdrop containerRef={heroRef} />
 
           <div className="relative z-10 flex flex-col items-center text-center w-full max-w-[900px] mx-auto">
-            <ClubLogo className="h-20 w-20 object-contain drop-shadow-md mb-8" />
+            <motion.button
+              type="button"
+              onClick={handleCrestClick}
+              animate={crestPulse ? { scale: [1, 1.1, 1], rotate: [0, -4, 4, 0] } : { scale: 1 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+              className="mb-8 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/40 touch-manipulation"
+              aria-label="Bishop Middleham Football Club crest"
+            >
+              <ClubLogo className="h-20 w-20 object-contain drop-shadow-md pointer-events-none" />
+            </motion.button>
 
             <h1
               className="font-display tracking-tight text-brand-navy leading-[1.05] max-w-[900px]"

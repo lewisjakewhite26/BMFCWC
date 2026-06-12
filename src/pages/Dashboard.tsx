@@ -14,7 +14,7 @@ import { fetchGroupStageGameDays, fetchOpenGameDay, fetchFixturesByGameDay } fro
 import { getDefaultGroupTab, getMatchdayTabState } from '../lib/matchdays'
 import { getEarliestKickoff } from '../lib/scoring'
 import { getTimeGreeting } from '../lib/greeting'
-import { hapticMatchdayLocked } from '../lib/haptics'
+import { hapticMatchdayLocked, previewHaptic } from '../lib/haptics'
 import { isDevBypassSession, MOCK_GAME_DAYS, getMockFixturesByGameDay } from '../lib/devBypass'
 import { useMatchdayRecap } from '../hooks/useMatchdayRecap'
 import { MatchdayRecapModal } from '../components/dashboard/MatchdayRecapModal'
@@ -32,8 +32,9 @@ export default function Dashboard() {
   const [selectedGroupDay, setSelectedGroupDay] = useState(1)
   const [loadingDays, setLoadingDays] = useState(true)
   const [lockedFixtures, setLockedFixtures] = useState<Set<number>>(new Set())
+  const [nameEasterEggLine, setNameEasterEggLine] = useState<string | null>(null)
+  const groupPrevPredictionCount = useRef<number | null>(null)
   const knockoutPrevCount = useRef<number | null>(null)
-  const initialConfirmSyncDone = useRef(false)
 
   const selectedGameDay = groupGameDays.find((g) => g.game_day === selectedGroupDay) ?? null
   const matchdayOpen = selectedGameDay?.status === 'open'
@@ -44,11 +45,15 @@ export default function Dashboard() {
 
   const knockoutPredictions = usePredictions(knockoutGameDay?.game_day ?? null)
 
+  const userId = user?.id
+
   useEffect(() => {
+    if (!userId || !user) return
+
     async function load() {
       setLoadingDays(true)
       try {
-        if (user && isDevBypassSession(user)) {
+        if (isDevBypassSession(user)) {
           const days = MOCK_GAME_DAYS.filter((g) => g.game_day <= 3)
           const byDay: Record<number, Fixture[]> = {}
           for (const day of [1, 2, 3]) {
@@ -79,53 +84,49 @@ export default function Dashboard() {
       }
     }
     load()
-  }, [user])
+    // Only re-run when the signed-in user changes, not on session refresh (points update).
+  }, [userId])
 
   useEffect(() => {
-    initialConfirmSyncDone.current = false
+    groupPrevPredictionCount.current = null
   }, [selectedGroupDay])
 
   useEffect(() => {
     if (!loadingFixtures) {
       setLockedFixtures(new Set(predictions.keys()))
-      queueMicrotask(() => {
-        initialConfirmSyncDone.current = true
-      })
     }
   }, [loadingFixtures, predictions, selectedGroupDay])
 
-  const handleConfirmChange = useCallback(
-    (fixtureId: number, confirmed: boolean) => {
-      setLockedFixtures((prev) => {
-        const next = new Set(prev)
-        if (confirmed) next.add(fixtureId)
-        else next.delete(fixtureId)
-
-        if (
-          initialConfirmSyncDone.current &&
-          confirmed &&
-          matchdayOpen &&
-          fixtures.length > 0 &&
-          next.size === fixtures.length &&
-          prev.size < fixtures.length
-        ) {
-          hapticMatchdayLocked()
-        }
-        return next
-      })
-    },
-    [matchdayOpen, fixtures.length]
-  )
+  const handleConfirmChange = useCallback((fixtureId: number, confirmed: boolean) => {
+    setLockedFixtures((prev) => {
+      const next = new Set(prev)
+      if (confirmed) next.add(fixtureId)
+      else next.delete(fixtureId)
+      return next
+    })
+  }, [])
 
   const handleSave = async (fixtureId: number, home: number, away: number) => {
     await submitPrediction(fixtureId, home, away)
   }
 
+  const predictionCount = predictions.size
+
+  useEffect(() => {
+    if (!matchdayOpen || loadingFixtures || fixtures.length === 0) {
+      groupPrevPredictionCount.current = null
+      return
+    }
+    const prev = groupPrevPredictionCount.current
+    groupPrevPredictionCount.current = predictionCount
+    if (prev !== null && prev < fixtures.length && predictionCount === fixtures.length) {
+      hapticMatchdayLocked()
+    }
+  }, [predictionCount, fixtures.length, matchdayOpen, loadingFixtures, selectedGroupDay])
+
   const lockedCount = fixtures.filter((f) => lockedFixtures.has(f.id)).length
 
-  const knockoutLockedCount = knockoutPredictions.fixtures.filter((f) =>
-    knockoutPredictions.predictions.has(f.id)
-  ).length
+  const knockoutLockedCount = knockoutPredictions.predictions.size
   const knockoutTotal = knockoutPredictions.fixtures.length
   const knockoutOpen = knockoutGameDay?.status === 'open'
 
@@ -156,6 +157,20 @@ export default function Dashboard() {
   const hasAnyContent = hasOpenGroupMatchday || knockoutGameDay !== null || groupGameDays.some((g) => g.status === 'completed')
 
   const hasNoActiveGames = !loading && !hasAnyContent
+  const firstName = user?.display_name?.split(' ')[0] ?? 'there'
+
+  const NAME_EASTER_EGG_LINES = [
+    'Back yourself.',
+    'Dreams are made of goals.',
+    'Form is temporary. Class is permanent.',
+  ]
+
+  const handleNameClick = () => {
+    previewHaptic('recapGreat')
+    const line = NAME_EASTER_EGG_LINES[Math.floor(Math.random() * NAME_EASTER_EGG_LINES.length)]
+    setNameEasterEggLine(line)
+    window.setTimeout(() => setNameEasterEggLine(null), 2800)
+  }
 
   return (
     <PageShell>
@@ -174,10 +189,18 @@ export default function Dashboard() {
       <div className="max-w-4xl mx-auto px-4 py-5 sm:py-8 space-y-5 sm:space-y-8">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl text-brand-navy mb-0.5">
-            {getTimeGreeting()}, {user?.display_name?.split(' ')[0] ?? 'there'}
+            {getTimeGreeting()},{' '}
+            <button
+              type="button"
+              onClick={handleNameClick}
+              className="underline decoration-brand-gold/50 decoration-2 underline-offset-[6px] hover:text-brand-blue transition-colors touch-manipulation"
+            >
+              {firstName}
+            </button>
           </h1>
           <p className="text-sm sm:text-base text-gray-500">
-            Pick your scores for each group game. Each fixture locks one minute before kickoff.
+            {nameEasterEggLine ??
+              'Pick your scores for each group game. Each fixture locks one minute before kickoff.'}
           </p>
         </div>
 
