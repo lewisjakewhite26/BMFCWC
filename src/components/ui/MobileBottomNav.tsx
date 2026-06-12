@@ -114,6 +114,13 @@ export function MobileBottomNav() {
               Admin
             </Link>
           )}
+          <Link
+            to="/profile"
+            onClick={() => setMenuOpen(false)}
+            className="flex items-center min-h-[48px] px-3 rounded-xl text-brand-navy font-medium active:bg-brand-blue/5"
+          >
+            Profile
+          </Link>
           <button
             type="button"
             onClick={() => {

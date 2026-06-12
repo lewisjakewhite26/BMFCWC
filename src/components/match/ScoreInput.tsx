@@ -84,7 +84,7 @@ export const ScoreInput = forwardRef<HTMLInputElement, ScoreInputProps>(function
       onChange={handleChange}
       className={`
         w-11 h-11 sm:w-16 sm:h-16 text-center text-xl sm:text-3xl font-mono font-bold rounded-xl sm:rounded-2xl
-        transition-all duration-200 text-brand-navy touch-manipulation shrink-0
+        transition-[background-color,border-color,box-shadow,opacity] duration-200 text-brand-navy touch-manipulation shrink-0
         focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20
         [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
         ${disabled ? 'opacity-50 cursor-not-allowed text-gray-400 bg-gray-50 border-2 border-gray-200' : ''}

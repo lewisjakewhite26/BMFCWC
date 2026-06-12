@@ -4,7 +4,7 @@ import { PointsBadge } from './PointsBadge'
 import { formatKickoffLocal, getStageLabel } from '../../lib/scoring'
 import { FixtureLockCountdown } from './FixtureLockCountdown'
 import { SaveStatusBadge, SAVE_SUCCESS_MS, type SavePhase } from './SaveFeedback'
-import { hapticTap } from '../../lib/haptics'
+import { hapticSaveSuccess } from '../../lib/haptics'
 import type { Fixture, Prediction } from '../../types'
 
 interface MatchCardProps {
@@ -82,7 +82,7 @@ export function MatchCard({
         setSavePhase('success')
         setConfirmed(true)
         userHasEdited.current = false
-        hapticTap()
+        hapticSaveSuccess()
 
         window.setTimeout(() => {
           setSavePhase('idle')
@@ -135,7 +135,8 @@ export function MatchCard({
   return (
     <div
       className={`
-        relative p-4 sm:p-5 rounded-2xl transition-all duration-300
+        relative p-4 sm:p-5 rounded-2xl
+        transition-[background-color,border-color,box-shadow,opacity] duration-300
         ${locked && !hasResult ? 'opacity-75 glass-card' : ''}
         ${!locked || hasResult ? (
           isLockedIn
@@ -164,18 +165,22 @@ export function MatchCard({
           {getStageLabel(fixture.stage)}
           {fixture.group_name && ` · Group ${fixture.group_name}`}
         </span>
-        <div className="flex items-center gap-1.5 shrink-0 min-h-[1.75rem]">
-          <SaveStatusBadge phase={savePhase} />
-          {savePhase === 'idle' && isAwaitingPick && !scoresComplete && (
-            <span className="text-[10px] sm:text-xs font-medium text-brand-gold/90 bg-brand-gold/10 border border-brand-gold/20 px-2 py-0.5 rounded-pill whitespace-nowrap">
-              Not yet entered
-            </span>
-          )}
-          {savePhase === 'idle' && isLockedIn && editable && (
-            <span className="text-[10px] sm:text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-pill whitespace-nowrap">
-              Submitted
-            </span>
-          )}
+        <div className="flex items-center justify-end gap-1.5 shrink-0 min-h-[1.75rem]">
+          <div className="w-7 h-7 flex items-center justify-center shrink-0">
+            <SaveStatusBadge phase={savePhase} />
+          </div>
+          <div className="min-w-[5.5rem] flex justify-end">
+            {savePhase === 'idle' && isAwaitingPick && !scoresComplete && (
+              <span className="text-[10px] sm:text-xs font-medium text-brand-gold/90 bg-brand-gold/10 border border-brand-gold/20 px-2 py-0.5 rounded-pill whitespace-nowrap">
+                Not yet entered
+              </span>
+            )}
+            {savePhase === 'idle' && isLockedIn && editable && (
+              <span className="text-[10px] sm:text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-pill whitespace-nowrap">
+                Submitted
+              </span>
+            )}
+          </div>
           {prediction && hasResult && <PointsBadge points={prediction.points_awarded} size="sm" />}
           {locked && !hasResult && (
             <span className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
@@ -193,7 +198,8 @@ export function MatchCard({
         awayTeam={fixture.away_team}
         homeScore={displayHome}
         awayScore={displayAway}
-        editable={editable && savePhase !== 'loading'}
+        editable={editable}
+        disabled={savePhase === 'loading'}
         awaiting={isAwaitingPick}
         onHomeChange={editable ? handleHomeChange : undefined}
         onAwayChange={editable ? handleAwayChange : undefined}

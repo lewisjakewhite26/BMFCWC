@@ -14,6 +14,7 @@ interface MatchScoreLineProps {
   homeScore: number | ''
   awayScore: number | ''
   editable?: boolean
+  disabled?: boolean
   awaiting?: boolean
   onHomeChange?: (value: number | '') => void
   onAwayChange?: (value: number | '') => void
@@ -36,6 +37,7 @@ export const MatchScoreLine = forwardRef<MatchScoreLineHandle, MatchScoreLinePro
     homeScore,
     awayScore,
     editable = false,
+    disabled = false,
     awaiting = false,
     onHomeChange,
     onAwayChange,
@@ -68,6 +70,7 @@ export const MatchScoreLine = forwardRef<MatchScoreLineHandle, MatchScoreLinePro
               value={homeScore}
               onChange={onHomeChange}
               onAdvance={() => awayInputRef.current?.focus({ preventScroll: true })}
+              disabled={disabled}
               awaiting={awaiting}
               ariaLabel={`Predicted score for ${homeTeam}`}
             />
@@ -78,6 +81,7 @@ export const MatchScoreLine = forwardRef<MatchScoreLineHandle, MatchScoreLinePro
               ref={awayInputRef}
               value={awayScore}
               onChange={onAwayChange}
+              disabled={disabled}
               awaiting={awaiting}
               ariaLabel={`Predicted score for ${awayTeam}`}
             />

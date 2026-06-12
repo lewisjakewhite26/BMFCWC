@@ -64,6 +64,12 @@ export function Navbar({ displayName: propDisplayName, totalPoints: propPoints }
               >
                 History
               </Link>
+              <Link
+                to="/profile"
+                className={`nav-link ${isActive('/profile') ? 'nav-link-active' : ''}`}
+              >
+                Profile
+              </Link>
               <div className="flex items-center gap-2.5">
                 <span className="text-sm text-gray-600">{displayName}</span>
                 <PointsTotal points={totalPoints ?? 0} />

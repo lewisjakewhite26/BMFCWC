@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import PreviousPredictions from './pages/PreviousPredictions'
+import Profile from './pages/Profile'
 import LeaderboardPage from './pages/Leaderboard'
 import Admin from './pages/Admin'
 import AdminOperations from './pages/AdminOperations'
@@ -60,6 +61,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PreviousPredictions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />
