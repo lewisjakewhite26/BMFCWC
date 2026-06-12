@@ -220,6 +220,20 @@ export function SyncStatusCard({ devMode = false }: SyncStatusCardProps) {
         </p>
       )}
 
+      {status?.last_sync_message &&
+        /free plans do not have access|do not have access to this season/i.test(
+          status.last_sync_message
+        ) && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+            <p className="font-medium">Automatic sync is unavailable on the free API-Football plan.</p>
+            <p className="mt-1 text-amber-800">
+              World Cup 2026 needs a paid API-Sports plan, or enter scores below in{' '}
+              <strong>Manual Result Entry</strong> after each game — points update on The Table
+              immediately.
+            </p>
+          </div>
+        )}
+
       <button
         type="button"
         onClick={handleManualSync}

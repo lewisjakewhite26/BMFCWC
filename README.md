@@ -107,7 +107,9 @@ Copy from `.env.example`. Use the same values for Preview and Production unless 
 | `API_FOOTBALL_KEY` | Result sync | ✅ if using live sync |
 | `API_FOOTBALL_BASE_URL` | Result sync | ✅ |
 | `API_FOOTBALL_LEAGUE` | Result sync | ✅ |
-| `API_FOOTBALL_SEASON` | Result sync | ✅ |
+| `API_FOOTBALL_SEASON` | Result sync | ✅ (`2026` for World Cup) |
+
+**API-Football plan:** The free tier only covers seasons **2022–2024**. World Cup **2026** live sync needs a [paid API-Sports plan](https://www.api-football.com/pricing). Without it, use **Admin → Technical → Manual Result Entry** after each game (points still update live on The Table).
 | `CRON_SECRET` | Cron auth | ✅ (recommended) |
 
 **Important:** Never prefix server secrets with `VITE_` — those are embedded in the client bundle.

@@ -139,6 +139,23 @@ function todayDateString(): string {
   return new Date().toISOString().split('T')[0]
 }
 
+function isApiSeasonPlanError(message: string): boolean {
+  return /free plans do not have access|do not have access to this season/i.test(message)
+}
+
+async function getLastSyncMessage(): Promise<string | null> {
+  const supabase = getSupabaseAdmin()
+  const { data } = await supabase
+    .from('api_request_log')
+    .select('last_sync_message, last_sync_status')
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!data || data.last_sync_status !== 'error') return null
+  return data.last_sync_message
+}
+
 async function getRequestCount(date: string): Promise<number> {
   const supabase = getSupabaseAdmin()
   const { data } = await supabase
@@ -347,6 +364,22 @@ export async function runSyncResults(options?: { force?: boolean }): Promise<Syn
       success: true,
       skipped: true,
       reason: 'Daily limit reached',
+      requestCount: currentCount,
+    }
+  }
+
+  const lastError = await getLastSyncMessage()
+  if (lastError && isApiSeasonPlanError(lastError) && !options?.force) {
+    await supabase.rpc('update_api_sync_log', {
+      p_date: today,
+      p_status: 'skipped',
+      p_message: lastError,
+    })
+    return {
+      success: true,
+      skipped: true,
+      reason: lastError,
+      message: lastError,
       requestCount: currentCount,
     }
   }
