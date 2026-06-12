@@ -128,7 +128,7 @@ export default function Dashboard() {
             {getTimeGreeting()}, {user?.display_name?.split(' ')[0] ?? 'there'}
           </h1>
           <p className="text-sm sm:text-base text-gray-500">
-            Pick your scores for each group game — every matchday closes one hour before its first kickoff
+            Pick your scores for each group game — each fixture locks one hour before kickoff
           </p>
         </div>
 

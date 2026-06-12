@@ -17,7 +17,12 @@ const openDay = (gameDay: number): GameDay => ({
 })
 
 const fixtures = [
-  { kickoff_utc: '2026-06-15T19:00:00.000Z' },
+  { kickoff_utc: '2026-06-15T19:00:00.000Z', status: 'open', home_score: null, away_score: null },
+] as Fixture[]
+
+const multiFixtures = [
+  { kickoff_utc: '2026-06-15T19:00:00.000Z', status: 'open', home_score: null, away_score: null },
+  { kickoff_utc: '2026-06-15T22:00:00.000Z', status: 'open', home_score: null, away_score: null },
 ] as Fixture[]
 
 describe('matchdays', () => {
@@ -39,9 +44,14 @@ describe('matchdays', () => {
       expect(getMatchdayTabState({ ...openDay(1), status: 'completed' }, fixtures)).toBe('complete')
     })
 
-    it('returns closed after the cutoff', () => {
+    it('returns closed when every fixture has passed its cutoff', () => {
       vi.setSystemTime(new Date('2026-06-15T20:00:00.000Z'))
       expect(getMatchdayTabState(openDay(1), fixtures)).toBe('closed')
+    })
+
+    it('stays open while later fixtures are still editable', () => {
+      vi.setSystemTime(new Date('2026-06-15T20:00:00.000Z'))
+      expect(getMatchdayTabState(openDay(1), multiFixtures)).toBe('predict')
     })
 
     it('returns predict while open and before cutoff', () => {
@@ -58,9 +68,9 @@ describe('matchdays', () => {
       vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'))
       const gameDays = [openDay(1), openDay(2), openDay(3)]
       const fixturesByDay = {
-        1: [{ kickoff_utc: '2026-06-10T19:00:00.000Z' }] as Fixture[],
-        2: [{ kickoff_utc: '2026-06-18T19:00:00.000Z' }] as Fixture[],
-        3: [{ kickoff_utc: '2026-06-24T19:00:00.000Z' }] as Fixture[],
+        1: [{ kickoff_utc: '2026-06-10T19:00:00.000Z', status: 'open', home_score: null, away_score: null }] as Fixture[],
+        2: [{ kickoff_utc: '2026-06-18T19:00:00.000Z', status: 'open', home_score: null, away_score: null }] as Fixture[],
+        3: [{ kickoff_utc: '2026-06-24T19:00:00.000Z', status: 'open', home_score: null, away_score: null }] as Fixture[],
       }
       expect(getDefaultGroupTab(gameDays, fixturesByDay)).toBe(2)
     })

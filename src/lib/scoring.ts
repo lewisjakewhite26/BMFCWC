@@ -39,6 +39,52 @@ export function isGameDayPredictionsLocked(
   return Date.now() >= cutoff.getTime()
 }
 
+const HOUR_MS = 60 * 60 * 1000
+const LOCK_COUNTDOWN_WINDOW_MS = 24 * HOUR_MS
+
+type FixtureLockFields = {
+  kickoff_utc: string
+  status: string
+  home_score: number | null
+  away_score: number | null
+}
+
+/** Predictions lock 1 hour before this fixture's kickoff */
+export function getFixtureCutoff(kickoffUtc: string): Date {
+  return new Date(new Date(kickoffUtc).getTime() - HOUR_MS)
+}
+
+export function isFixturePredictionsLocked(
+  fixture: FixtureLockFields,
+  gameDayOpen: boolean
+): boolean {
+  if (!gameDayOpen) return true
+  if (fixture.status === 'completed' || fixture.status === 'locked') return true
+  if (fixture.home_score !== null && fixture.away_score !== null) return true
+  return Date.now() >= getFixtureCutoff(fixture.kickoff_utc).getTime()
+}
+
+export function hasOpenFixturesForPredictions(
+  fixtures: FixtureLockFields[],
+  gameDayOpen: boolean
+): boolean {
+  return fixtures.some((fixture) => !isFixturePredictionsLocked(fixture, gameDayOpen))
+}
+
+/** Returns "locks in 2h 15m" when within 24 hours of the fixture cutoff, otherwise null */
+export function getFixtureLockCountdownText(kickoffUtc: string, now = Date.now()): string | null {
+  const remaining = getFixtureCutoff(kickoffUtc).getTime() - now
+  if (remaining <= 0 || remaining > LOCK_COUNTDOWN_WINDOW_MS) return null
+
+  const totalMinutes = Math.ceil(remaining / 60_000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  if (hours > 0 && minutes > 0) return `locks in ${hours}h ${minutes}m`
+  if (hours > 0) return `locks in ${hours}h`
+  return `locks in ${minutes}m`
+}
+
 export function formatCutoffLocal(cutoff: Date): string {
   return cutoff.toLocaleString(undefined, {
     weekday: 'short',

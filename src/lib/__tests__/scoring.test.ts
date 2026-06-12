@@ -4,6 +4,9 @@ import {
   calculatePoints,
   getEarliestKickoff,
   getGameDayCutoff,
+  getFixtureCutoff,
+  getFixtureLockCountdownText,
+  isFixturePredictionsLocked,
   isGameDayPredictionsLocked,
   getStageLabel,
 } from '../scoring'
@@ -86,6 +89,47 @@ describe('matchday cutoff', () => {
       vi.setSystemTime(new Date('2026-06-15T20:00:00.000Z'))
       expect(isGameDayPredictionsLocked(fixtures, true)).toBe(true)
     })
+  })
+})
+
+describe('fixture cutoff', () => {
+  const fixture = {
+    kickoff_utc: '2026-06-15T19:00:00.000Z',
+    status: 'open',
+    home_score: null,
+    away_score: null,
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('locks one hour before kickoff', () => {
+    expect(getFixtureCutoff(fixture.kickoff_utc).toISOString()).toBe('2026-06-15T18:00:00.000Z')
+  })
+
+  it('is editable before the fixture cutoff', () => {
+    vi.setSystemTime(new Date('2026-06-15T17:59:00.000Z'))
+    expect(isFixturePredictionsLocked(fixture, true)).toBe(false)
+  })
+
+  it('is locked at and after the fixture cutoff', () => {
+    vi.setSystemTime(new Date('2026-06-15T18:00:00.000Z'))
+    expect(isFixturePredictionsLocked(fixture, true)).toBe(true)
+  })
+
+  it('shows a countdown within 24 hours of locking', () => {
+    vi.setSystemTime(new Date('2026-06-15T16:45:00.000Z'))
+    expect(getFixtureLockCountdownText(fixture.kickoff_utc)).toBe('locks in 1h 15m')
+  })
+
+  it('hides the countdown more than 24 hours before locking', () => {
+    vi.setSystemTime(new Date('2026-06-14T12:00:00.000Z'))
+    expect(getFixtureLockCountdownText(fixture.kickoff_utc)).toBeNull()
   })
 })
 

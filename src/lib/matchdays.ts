@@ -1,5 +1,5 @@
 import type { Fixture, GameDay } from '../types'
-import { getGameDayCutoff, isGameDayPredictionsLocked } from './scoring'
+import { getGameDayCutoff, hasOpenFixturesForPredictions } from './scoring'
 
 export const GROUP_STAGE_GAME_DAYS = [1, 2, 3] as const
 export const FIRST_KNOCKOUT_GAME_DAY = 4
@@ -19,8 +19,9 @@ export type MatchdayTabState = 'predict' | 'closed' | 'complete' | 'locked'
 export function getMatchdayTabState(gameDay: GameDay, fixtures: Fixture[]): MatchdayTabState {
   if (gameDay.status === 'completed') return 'complete'
   if (gameDay.status === 'locked') return 'locked'
-  if (isGameDayPredictionsLocked(fixtures, true)) return 'closed'
-  return 'predict'
+  if (fixtures.length === 0) return 'locked'
+  if (hasOpenFixturesForPredictions(fixtures, gameDay.status === 'open')) return 'predict'
+  return 'closed'
 }
 
 export function getDefaultGroupTab(
