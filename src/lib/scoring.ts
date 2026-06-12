@@ -59,7 +59,7 @@ export function isFixturePredictionsLocked(
   gameDayOpen: boolean
 ): boolean {
   if (!gameDayOpen) return true
-  if (fixture.status === 'completed' || fixture.status === 'locked') return true
+  if (fixture.status === 'completed') return true
   if (fixture.home_score !== null && fixture.away_score !== null) return true
   return Date.now() >= getFixtureCutoff(fixture.kickoff_utc).getTime()
 }
@@ -69,6 +69,19 @@ export function hasOpenFixturesForPredictions(
   gameDayOpen: boolean
 ): boolean {
   return fixtures.some((fixture) => !isFixturePredictionsLocked(fixture, gameDayOpen))
+}
+
+/** Earliest upcoming fixture cutoff among fixtures still accepting predictions */
+export function getNextFixtureCutoff(
+  fixtures: FixtureLockFields[],
+  gameDayOpen: boolean
+): Date | null {
+  const cutoffs = fixtures
+    .filter((fixture) => !isFixturePredictionsLocked(fixture, gameDayOpen))
+    .map((fixture) => getFixtureCutoff(fixture.kickoff_utc).getTime())
+
+  if (cutoffs.length === 0) return null
+  return new Date(Math.min(...cutoffs))
 }
 
 /** Returns "locks in 2h 15m" when within 24 hours of the fixture cutoff, otherwise null */

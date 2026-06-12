@@ -12,7 +12,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePredictions } from '../hooks/usePredictions'
 import { fetchGroupStageGameDays, fetchOpenGameDay, fetchFixturesByGameDay } from '../lib/fixtures'
 import { getDefaultGroupTab, getMatchdayTabState } from '../lib/matchdays'
-import { getGameDayCutoff } from '../lib/scoring'
+import { getNextFixtureCutoff } from '../lib/scoring'
 import { getTimeGreeting } from '../lib/greeting'
 import { isDevBypassSession, MOCK_GAME_DAYS, getMockFixturesByGameDay } from '../lib/devBypass'
 import { useMatchdayRecap } from '../hooks/useMatchdayRecap'
@@ -98,11 +98,14 @@ export default function Dashboard() {
 
   const lockedCount = fixtures.filter((f) => lockedFixtures.has(f.id)).length
   const loading = loadingDays || (loadingFixtures && fixtures.length === 0)
-  const cutoff = useMemo(() => getGameDayCutoff(fixtures), [fixtures])
+  const cutoff = useMemo(
+    () => (selectedGameDay?.status === 'open' ? getNextFixtureCutoff(fixtures, true) : null),
+    [fixtures, selectedGameDay?.status]
+  )
   const tabState = selectedGameDay
     ? getMatchdayTabState(selectedGameDay, fixtures)
     : 'locked'
-  const canPredict = tabState === 'predict'
+  const matchdayOpen = selectedGameDay?.status === 'open'
   const hasOpenGroupMatchday = groupGameDays.some((g) => g.status === 'open')
   const hasAnyContent = hasOpenGroupMatchday || knockoutGameDay !== null || groupGameDays.some((g) => g.status === 'completed')
 
@@ -151,8 +154,8 @@ export default function Dashboard() {
               <DashboardStatusBanner
                 lockedCount={lockedCount}
                 total={fixtures.length}
-                cutoff={canPredict || tabState === 'closed' ? cutoff : null}
-                hasOpenMatchday={canPredict || tabState === 'closed'}
+                cutoff={matchdayOpen ? cutoff : null}
+                hasOpenMatchday={matchdayOpen}
                 tabState={tabState}
                 onExpired={() => reload({ silent: true })}
               />
@@ -172,10 +175,10 @@ export default function Dashboard() {
               gameDay={selectedGameDay}
               fixtures={fixtures}
               predictions={predictions}
-              onSave={canPredict ? handleSave : undefined}
+              onSave={matchdayOpen ? handleSave : undefined}
               isCurrent
               isHistory={tabState === 'complete'}
-              onConfirmChange={canPredict ? handleConfirmChange : undefined}
+              onConfirmChange={matchdayOpen ? handleConfirmChange : undefined}
             />
           ) : null}
 
@@ -189,7 +192,7 @@ export default function Dashboard() {
                 total={knockoutPredictions.fixtures.length}
                 cutoff={
                   knockoutGameDay.status === 'open' && knockoutPredictions.fixtures.length > 0
-                    ? getGameDayCutoff(knockoutPredictions.fixtures)
+                    ? getNextFixtureCutoff(knockoutPredictions.fixtures, true)
                     : null
                 }
                 hasOpenMatchday={knockoutGameDay.status === 'open'}

@@ -150,8 +150,8 @@ export function DashboardStatusBanner({
   const showCountdown = cutoff !== null && cutoffMs !== null
 
   let statusLine: string
-  if (remaining <= 0) {
-    statusLine = 'Predictions closed for this matchday'
+  if (remaining <= 0 && tabState === 'closed') {
+    statusLine = 'All fixtures closed for predictions'
   } else if (allLocked) {
     statusLine = 'All predictions submitted'
   } else if (total === 0) {
@@ -176,7 +176,7 @@ export function DashboardStatusBanner({
           </p>
           {showCountdown && remaining > 0 && (
             <p className="text-[11px] text-gray-400 mt-1 truncate">
-              Closes {formatCutoffLocal(cutoff!)}
+              Next fixture closes {formatCutoffLocal(cutoff!)}
             </p>
           )}
         </div>

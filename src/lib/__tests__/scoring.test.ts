@@ -6,6 +6,7 @@ import {
   getGameDayCutoff,
   getFixtureCutoff,
   getFixtureLockCountdownText,
+  getNextFixtureCutoff,
   isFixturePredictionsLocked,
   isGameDayPredictionsLocked,
   getStageLabel,
@@ -120,6 +121,28 @@ describe('fixture cutoff', () => {
   it('is locked at and after the fixture cutoff', () => {
     vi.setSystemTime(new Date('2026-06-15T18:00:00.000Z'))
     expect(isFixturePredictionsLocked(fixture, true)).toBe(true)
+  })
+
+  it('ignores stale locked status before the fixture cutoff', () => {
+    vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'))
+    expect(isFixturePredictionsLocked({ ...fixture, status: 'locked' }, true)).toBe(false)
+  })
+
+  it('finds the next open fixture cutoff', () => {
+    vi.setSystemTime(new Date('2026-06-15T20:00:00.000Z'))
+    const cutoffs = getNextFixtureCutoff(
+      [
+        fixture,
+        {
+          kickoff_utc: '2026-06-15T22:00:00.000Z',
+          status: 'open',
+          home_score: null,
+          away_score: null,
+        },
+      ],
+      true
+    )
+    expect(cutoffs?.toISOString()).toBe('2026-06-15T21:00:00.000Z')
   })
 
   it('shows a countdown within 24 hours of locking', () => {
