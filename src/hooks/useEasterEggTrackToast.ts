@@ -43,5 +43,5 @@ export function useEasterEggTrackToast() {
     return id
   }, [])
 
-  return { track, trigger, hapticsSupported: canUseHaptics() }
+  return { track, trigger }
 }

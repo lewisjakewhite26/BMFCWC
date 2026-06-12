@@ -34,8 +34,7 @@ export default function Dashboard() {
   const [selectedGroupDay, setSelectedGroupDay] = useState(1)
   const [loadingDays, setLoadingDays] = useState(true)
   const [lockedFixtures, setLockedFixtures] = useState<Set<number>>(new Set())
-  const [nameEasterEggLine, setNameEasterEggLine] = useState<string | null>(null)
-  const { track: easterEggTrack, trigger: triggerEasterEgg, hapticsSupported } = useEasterEggTrackToast()
+  const { track: easterEggTrack, trigger: triggerEasterEgg } = useEasterEggTrackToast()
   const groupPrevPredictionCount = useRef<number | null>(null)
   const knockoutPrevCount = useRef<number | null>(null)
 
@@ -162,20 +161,8 @@ export default function Dashboard() {
   const hasNoActiveGames = !loading && !hasAnyContent
   const firstName = user?.display_name?.split(' ')[0] ?? 'there'
 
-  const NAME_EASTER_EGG_LINES = [
-    'Back yourself.',
-    'Dreams are made of goals.',
-    'Form is temporary. Class is permanent.',
-  ]
-
   const handleNameClick = () => {
-    if (hapticsSupported) {
-      triggerEasterEgg()
-      return
-    }
-    const line = NAME_EASTER_EGG_LINES[Math.floor(Math.random() * NAME_EASTER_EGG_LINES.length)]
-    setNameEasterEggLine(line)
-    window.setTimeout(() => setNameEasterEggLine(null), 2800)
+    triggerEasterEgg()
   }
 
   return (
@@ -206,8 +193,7 @@ export default function Dashboard() {
             </button>
           </h1>
           <p className="text-sm sm:text-base text-gray-500">
-            {nameEasterEggLine ??
-              'Pick your scores for each group game. Each fixture locks one minute before kickoff.'}
+            Pick your scores for each group game. Each fixture locks one minute before kickoff.
           </p>
         </div>
 
