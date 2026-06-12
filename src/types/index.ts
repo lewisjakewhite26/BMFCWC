@@ -70,38 +70,6 @@ export interface UserStats {
   accuracy: number
 }
 
-export interface ApiSyncStatus {
-  date: string
-  request_count: number
-  max_requests: number
-  last_request_at: string | null
-  last_sync_at: string | null
-  last_sync_status: string
-  last_sync_message: string | null
-}
-
-export interface ProgressionLogEntry {
-  id: number
-  game_day: number
-  event: 'all_scored' | 'wait_started' | 'teams_discovered' | 'matchday_opened' | string
-  triggered_at: string
-  details: Record<string, unknown> | null
-}
-
-export interface ProgressionQueueEntry {
-  id: number
-  game_day: number
-  scheduled_for: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  created_at: string
-  processed_at: string | null
-}
-
-export interface ProgressionStatus {
-  log: ProgressionLogEntry[]
-  queue: ProgressionQueueEntry[]
-}
-
 export interface MatchdayRecap {
   game_day: number
   label: string

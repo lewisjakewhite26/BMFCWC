@@ -92,7 +92,7 @@ UPDATE users SET is_admin = true WHERE username = 'your_username';
 
 1. Push to GitHub and import the repo in Vercel.
 2. Add **all** environment variables below in Project Settings → Environment Variables.
-3. Deploy. Vercel will pick up `vercel.json` for SPA rewrites and cron schedules.
+3. Deploy. Vercel will pick up `vercel.json` for SPA rewrites.
 
 ### Environment variables
 
@@ -102,26 +102,12 @@ Copy from `.env.example`. Use the same values for Preview and Production unless 
 |----------|---------------|----------|
 | `VITE_SUPABASE_URL` | Browser (build + runtime) | ✅ |
 | `VITE_SUPABASE_ANON_KEY` | Browser (build + runtime) | ✅ |
-| `SUPABASE_URL` | API routes / cron | ✅ |
-| `SUPABASE_SERVICE_ROLE_KEY` | API routes / cron | ✅ |
-| `API_FOOTBALL_KEY` | Result sync | ✅ if using live sync |
-| `API_FOOTBALL_BASE_URL` | Result sync | ✅ |
-| `API_FOOTBALL_LEAGUE` | Result sync | ✅ |
-| `API_FOOTBALL_SEASON` | Result sync | ✅ (`2026` for World Cup) |
 
-**API-Football plan:** The free tier only covers seasons **2022–2024**. World Cup **2026** live sync needs a [paid API-Sports plan](https://www.api-football.com/pricing). Without it, use **Admin → Technical → Manual Result Entry** after each game (points still update live on The Table).
-| `CRON_SECRET` | Cron auth | ✅ (recommended) |
+**Important:** Never prefix secrets with `VITE_` — those are embedded in the client bundle.
 
-**Important:** Never prefix server secrets with `VITE_` — those are embedded in the client bundle.
+Match results are entered manually in **Admin → Technical → Manual Result Entry** after each game. Points update on The Table immediately (Supabase realtime + polling).
 
-If the site loads, sign-in works, and the admin sync panel runs, your Vercel env is likely set up correctly. Cron jobs need `CRON_SECRET` plus the Supabase service role key to sync results automatically.
-
-### Cron jobs (automatic)
-
-Configured in `vercel.json`:
-
-- **`/api/sync-results`** — every 10 minutes (pulls scores from API-Football)
-- **`/api/process-progression`** — every 5 minutes (knockout placeholder updates)
+You can remove obsolete Vercel env vars from older deploys: `API_FOOTBALL_*`, `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (no serverless API routes).
 
 ---
 

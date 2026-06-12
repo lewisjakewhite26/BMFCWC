@@ -1,17 +1,17 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Navbar } from '../components/ui/Navbar'
 import { PageShell } from '../components/ui/PageBackground'
 import { AdminNav } from '../components/admin/AdminNav'
 import { GameDayManager } from '../components/admin/GameDayManager'
 import { AdminFixtureRow } from '../components/admin/AdminFixtureRow'
-import { SyncStatusCard } from '../components/admin/SyncStatusCard'
-import { ProgressionStatusCard } from '../components/admin/ProgressionStatusCard'
 import { AdminSection } from '../components/admin/AdminSection'
+import { FixtureBrowser } from '../components/admin/FixtureBrowser'
 import { KnockoutFixtureEditor } from '../components/admin/KnockoutFixtureEditor'
 import { TableSkeleton } from '../components/ui/Skeleton'
 import { ErrorBoundary } from '../components/ui/ErrorBoundary'
 import { useAdminData } from '../hooks/useAdminData'
+import { fixtureHasPlaceholderTeams } from '../lib/knockoutFixtures'
 import { supabase } from '../lib/supabase'
 import type { AdminUserRow } from '../types'
 
@@ -32,6 +32,16 @@ export default function AdminTechnical() {
   const [newPasscode, setNewPasscode] = useState('')
   const [resettingPasscodeUserId, setResettingPasscodeUserId] = useState<string | null>(null)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
+
+  const pendingCount = useMemo(
+    () => fixtures.filter((f) => f.home_score === null || f.away_score === null).length,
+    [fixtures]
+  )
+
+  const placeholderCount = useMemo(
+    () => fixtures.filter(fixtureHasPlaceholderTeams).length,
+    [fixtures]
+  )
 
   const incompleteFixtures = gameDays.reduce<Record<number, number>>((acc, gd) => {
     acc[gd.game_day] = fixtures.filter(
@@ -179,51 +189,36 @@ export default function AdminTechnical() {
         <div className="mb-6">
           <h1 className="font-display text-2xl sm:text-3xl text-brand-navy">Admin</h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">
-            API sync, matchday controls, manual results, and user management.
+            Enter scores, browse the schedule, and manage matchdays.
           </p>
+        </div>
+
+        <div className="mb-6 rounded-xl border border-brand-blue/15 bg-white/50 px-4 py-3 text-sm text-gray-600">
+          <p className="font-medium text-brand-navy mb-1">Knockout rounds (matchdays 4–8)</p>
+          <ol className="list-decimal list-inside space-y-1 text-gray-600">
+            <li>When teams are known, open <strong>Knockout setup</strong> and replace placeholders (e.g. “Group A Winner”).</li>
+            <li>In <strong>Matchday manager</strong>, open that matchday so players can predict.</li>
+            <li>Enter final scores in <strong>Manual result entry</strong> — same as group stage.</li>
+          </ol>
         </div>
 
         <AdminNav />
 
-        <AdminSection title="API Sync">
-          <SyncStatusCard devMode={isDev} />
-        </AdminSection>
-
-        <AdminSection title="Auto Progression">
-          <ProgressionStatusCard devMode={isDev} />
-        </AdminSection>
-
         <AdminSection
-          title="Knockout Fixture Editor"
-          description="Update placeholder team names once knockout opponents are confirmed (Matchdays 4–8)."
-        >
-          <ErrorBoundary>
-            {loading ? (
-              <TableSkeleton rows={3} />
+          title="Manual result entry"
+          description="Enter or correct scores after each game. Points recalculate on The Table immediately."
+          defaultOpen
+          badge={
+            pendingCount > 0 ? (
+              <span className="text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-pill">
+                {pendingCount} pending
+              </span>
             ) : (
-              <KnockoutFixtureEditor fixtures={fixtures} devMode={isDev} onSaved={load} />
-            )}
-          </ErrorBoundary>
-        </AdminSection>
-
-        <AdminSection title="Matchday Manager">
-          <ErrorBoundary>
-            {loading ? (
-              <TableSkeleton rows={4} />
-            ) : (
-              <GameDayManager
-                gameDays={gameDays}
-                onOpen={handleOpenGameDay}
-                onComplete={handleCompleteGameDay}
-                incompleteFixtures={incompleteFixtures}
-              />
-            )}
-          </ErrorBoundary>
-        </AdminSection>
-
-        <AdminSection
-          title="Manual Result Entry"
-          description="Wrong score? Choose Scored results or a matchday, edit the numbers, then Update — points recalculate automatically."
+              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-pill">
+                All scored
+              </span>
+            )
+          }
           headerExtra={
             <select
               value={selectedGameDay}
@@ -250,7 +245,7 @@ export default function AdminTechnical() {
               <TableSkeleton rows={5} />
             ) : filteredFixtures.length === 0 ? (
               <div className="admin-inner-card p-6 text-center text-gray-500">
-                All fixtures have results entered
+                No fixtures in this view
               </div>
             ) : (
               <div className="space-y-3 max-h-[600px] overflow-y-auto overflow-x-hidden pr-1">
@@ -267,7 +262,58 @@ export default function AdminTechnical() {
         </AdminSection>
 
         <AdminSection
-          title="User Manager"
+          title="Fixture schedule"
+          description="Read-only view of every match — filter by matchday or show knockout placeholders still needing real team names."
+        >
+          <ErrorBoundary>
+            {loading ? (
+              <TableSkeleton rows={5} />
+            ) : (
+              <FixtureBrowser fixtures={fixtures} gameDays={gameDays} />
+            )}
+          </ErrorBoundary>
+        </AdminSection>
+
+        <AdminSection
+          title="Matchday manager"
+          description="Open matchdays for predictions or mark them complete once every score is entered. Knockout matchdays stay locked until the previous one is completed."
+        >
+          <ErrorBoundary>
+            {loading ? (
+              <TableSkeleton rows={4} />
+            ) : (
+              <GameDayManager
+                gameDays={gameDays}
+                onOpen={handleOpenGameDay}
+                onComplete={handleCompleteGameDay}
+                incompleteFixtures={incompleteFixtures}
+              />
+            )}
+          </ErrorBoundary>
+        </AdminSection>
+
+        <AdminSection
+          title="Knockout setup"
+          description="Replace placeholder team names before opening matchdays 4–8. Use Fixture schedule → “Knockout placeholders only” to see what’s left."
+          badge={
+            placeholderCount > 0 ? (
+              <span className="text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-pill">
+                {placeholderCount} placeholders
+              </span>
+            ) : undefined
+          }
+        >
+          <ErrorBoundary>
+            {loading ? (
+              <TableSkeleton rows={3} />
+            ) : (
+              <KnockoutFixtureEditor fixtures={fixtures} devMode={isDev} onSaved={load} />
+            )}
+          </ErrorBoundary>
+        </AdminSection>
+
+        <AdminSection
+          title="User manager"
           description="Compare signup dates to spot duplicate accounts with similar names."
         >
           <div className="overflow-hidden min-w-0">

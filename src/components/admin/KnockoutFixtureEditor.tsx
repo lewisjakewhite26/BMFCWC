@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { isEditableKnockoutFixture } from '../../lib/knockoutFixtures'
 import type { Fixture } from '../../types'
 
 interface KnockoutFixtureEditorProps {
@@ -10,18 +11,14 @@ interface KnockoutFixtureEditorProps {
   onSaved?: () => void
 }
 
-function isKnockoutPlaceholder(fixture: Fixture): boolean {
-  return fixture.game_day >= 4 && fixture.status === 'upcoming'
-}
-
 export function KnockoutFixtureEditor({ fixtures, devMode = false, onSaved }: KnockoutFixtureEditorProps) {
   const { user } = useAuth()
-  const knockoutFixtures = fixtures.filter(isKnockoutPlaceholder)
+  const knockoutFixtures = fixtures.filter(isEditableKnockoutFixture)
 
   if (knockoutFixtures.length === 0) {
     return (
       <div className="admin-inner-card p-6 text-center text-gray-500 text-sm">
-        No upcoming knockout placeholders to edit.
+        No open knockout fixtures to edit — either teams are already set or the matchday has started.
       </div>
     )
   }

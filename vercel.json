@@ -1,19 +1,4 @@
 {
-  "functions": {
-    "api/**/*.ts": {
-      "maxDuration": 30
-    }
-  },
-  "crons": [
-    {
-      "path": "/api/sync-results",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/process-progression",
-      "schedule": "*/5 * * * *"
-    }
-  ],
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]

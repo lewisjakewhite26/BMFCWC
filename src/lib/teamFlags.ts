@@ -48,7 +48,7 @@ const TEAM_FLAG_CODES: Record<string, string> = {
   'Panama': 'pa',
   'Uzbekistan': 'uz',
   'Colombia': 'co',
-  // API-Football name variants (mirrors api/lib/syncResults.ts)
+  // Alternate FIFA / broadcast name variants
   'United States': 'us',
   'Bosnia and Herzegovina': 'ba',
   'Korea Republic': 'kr',
