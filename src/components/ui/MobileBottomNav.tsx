@@ -15,7 +15,7 @@ function NavIcon({ children }: { children: React.ReactNode }) {
 const tabs = [
   {
     path: '/dashboard',
-    label: 'Home',
+    label: 'My Predictions',
     match: (p: string) => p === '/dashboard' || p === '/predictions',
     icon: (
       <NavIcon>
@@ -143,7 +143,7 @@ export function MobileBottomNav() {
                 }`}
               >
                 {tab.icon}
-                <span className={`text-[10px] font-semibold tracking-wide ${active ? 'text-brand-blue' : ''}`}>
+                <span className={`text-[10px] font-semibold tracking-wide text-center leading-tight max-w-[4.5rem] ${active ? 'text-brand-blue' : ''}`}>
                   {tab.label}
                 </span>
               </Link>

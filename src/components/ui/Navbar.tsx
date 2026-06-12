@@ -27,6 +27,8 @@ export function Navbar({ displayName: propDisplayName, totalPoints: propPoints }
   const openMatchday = useOpenMatchdayNumber()
 
   const isActive = (path: string) => location.pathname === path
+  const isPredictionsActive =
+    location.pathname === '/dashboard' || location.pathname === '/predictions'
   const isAdminActive = location.pathname.startsWith('/admin')
 
   return (
@@ -50,6 +52,12 @@ export function Navbar({ displayName: propDisplayName, totalPoints: propPoints }
           <>
             {/* Desktop nav */}
             <div className="hidden md:flex items-center gap-6">
+              <Link
+                to="/dashboard"
+                className={`nav-link ${isPredictionsActive ? 'nav-link-active' : ''}`}
+              >
+                My Predictions
+              </Link>
               <Link
                 to="/leaderboard"
                 className={`nav-link ${isActive('/leaderboard') ? 'nav-link-active' : ''}`}
