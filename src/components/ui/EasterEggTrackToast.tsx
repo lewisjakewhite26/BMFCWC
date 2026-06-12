@@ -40,13 +40,13 @@ export function EasterEggTrackToast({ track }: EasterEggTrackToastProps) {
           <div className="flex items-center gap-3 w-full max-w-md rounded-2xl border border-brand-gold/30 bg-brand-navy/92 backdrop-blur-md px-4 py-3 shadow-[0_12px_40px_rgba(13,27,75,0.35)]">
             <EqualizerBars />
             <div className="min-w-0 flex-1 text-left">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/90 font-semibold mb-0.5">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold font-semibold mb-0.5">
                 Now playing
               </p>
-              <p className="font-display text-base sm:text-lg text-white leading-tight truncate">
+              <p className="font-display text-base sm:text-lg text-brand-navy font-semibold leading-tight truncate">
                 {track.title}
               </p>
-              <p className="text-xs text-white/55 truncate mt-0.5">{track.artist}</p>
+              <p className="text-xs text-gray-700 truncate mt-0.5">{track.artist}</p>
             </div>
           </div>
         </motion.div>

@@ -57,7 +57,7 @@ export function GameDayPanel({
   )
 
   const fixtureList = (
-    <div className={`space-y-3 ${isCurrent ? '' : 'p-4 sm:p-5 pt-0 border-t border-brand-blue/10'}`}>
+    <div className={`space-y-1.5 ${isCurrent ? '' : isHistory ? 'px-3 pb-3 pt-0 border-t border-brand-blue/10' : 'p-4 sm:p-5 pt-0 border-t border-brand-blue/10'}`}>
       {fixtures.length === 0 ? (
         <p className="text-gray-500 text-sm text-center py-4">No fixtures</p>
       ) : isHistory ? (
@@ -118,7 +118,7 @@ export function GameDayPanel({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 min-h-[56px] hover:bg-white/40 active:bg-white/60 transition-colors touch-manipulation"
+        className="w-full flex items-center justify-between gap-3 p-3 sm:p-4 min-h-[48px] hover:bg-white/40 active:bg-white/60 transition-colors touch-manipulation"
       >
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <span className="font-display text-sm sm:text-lg text-brand-navy">{label}</span>

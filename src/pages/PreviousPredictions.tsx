@@ -60,7 +60,7 @@ export default function PreviousPredictions() {
               <p className="text-gray-500">No results yet. Your scored predictions will appear here as each fixture is confirmed.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {gameDays.map((day, index) => (
                 <GameDayPanel
                   key={day.id}

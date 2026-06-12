@@ -48,6 +48,12 @@ const PATTERNS: Record<HapticId, number | number[]> = {
   recapNightmare: [600],
 }
 
+export function getHapticPatternDuration(id: HapticId): number {
+  const pattern = PATTERNS[id]
+  if (typeof pattern === 'number') return pattern
+  return pattern.reduce((sum, ms) => sum + ms, 0)
+}
+
 export const HAPTIC_FEEDBACK_OPTIONS: HapticFeedbackOption[] = [
   {
     id: 'saveSuccess',
@@ -140,7 +146,7 @@ function cancelEasterEggPlayback(): void {
   easterEggCancelHandler?.()
 }
 
-function armEasterEggCancel(): void {
+function armEasterEggCancel(patternDurationMs: number): void {
   disarmEasterEggCancel()
   const armedAt = performance.now()
   const GRACE_MS = 150
@@ -178,7 +184,7 @@ function armEasterEggCancel(): void {
   }, 48)
   easterEggCleanup.push(() => window.clearInterval(scrollPoll))
 
-  const maxDuration = window.setTimeout(disarmEasterEggCancel, 16_000)
+  const maxDuration = window.setTimeout(disarmEasterEggCancel, patternDurationMs + 250)
   easterEggCleanup.push(() => window.clearTimeout(maxDuration))
 }
 
@@ -233,8 +239,9 @@ export function playRandomEasterEgg(): EasterEggHapticId {
   const id = EASTER_EGG_IDS[Math.floor(Math.random() * EASTER_EGG_IDS.length)]
   if (!canUseHaptics()) return id
 
+  const durationMs = getHapticPatternDuration(id)
   cancelHaptic()
-  armEasterEggCancel()
+  armEasterEggCancel(durationMs)
   navigator.vibrate(PATTERNS[id])
   return id
 }

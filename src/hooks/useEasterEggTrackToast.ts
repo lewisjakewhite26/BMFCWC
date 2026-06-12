@@ -3,12 +3,11 @@ import type { EasterEggTrack } from '../components/ui/EasterEggTrackToast'
 import {
   canUseHaptics,
   EASTER_EGG_TRACKS,
+  getHapticPatternDuration,
   playRandomEasterEgg,
   registerEasterEggCancelHandler,
   type EasterEggHapticId,
 } from '../lib/haptics'
-
-const TOAST_MS = 5000
 
 export function useEasterEggTrackToast() {
   const [track, setTrack] = useState<EasterEggTrack | null>(null)
@@ -37,9 +36,10 @@ export function useEasterEggTrackToast() {
     if (!canUseHaptics()) return null
 
     const id = playRandomEasterEgg()
+    const durationMs = getHapticPatternDuration(id)
     setTrack(EASTER_EGG_TRACKS[id])
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current)
-    timeoutRef.current = window.setTimeout(() => setTrack(null), TOAST_MS)
+    timeoutRef.current = window.setTimeout(() => setTrack(null), durationMs)
     return id
   }, [])
 
