@@ -116,6 +116,12 @@ export function canUseHaptics(): boolean {
   return typeof navigator !== 'undefined' && 'vibrate' in navigator
 }
 
+export function cancelHaptic(): void {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate(0)
+  }
+}
+
 export function triggerHaptic(id: HapticId, { force = false } = {}): void {
   if (!force && !isHapticsEnabled()) return
   if (!canUseHaptics()) return
