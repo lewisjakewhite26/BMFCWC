@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useAuth } from '../../hooks/useAuth'
 import { getAuthErrorMessage } from '../../lib/authErrors'
 import { PinInput } from './PinInput'
+import { ClubLogo } from '../ui/ClubLogo'
 
 export function LoginForm() {
   const [username, setUsername] = useState('')
@@ -40,12 +41,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6 w-full max-w-md">
       <div className="text-center">
-        <img
-          src="/logo.png"
-          alt="BMFC"
-          className="h-20 w-20 mx-auto mb-4 object-contain drop-shadow-md"
-          onError={(e) => { (e.target as HTMLImageElement).src = '/logo.svg' }}
-        />
+        <ClubLogo className="h-20 w-20 mx-auto mb-4 object-contain drop-shadow-md" />
         <h1 className="font-display text-2xl text-brand-navy">Welcome back</h1>
         <p className="text-gray-500 text-sm mt-1">Sign in to your account</p>
       </div>

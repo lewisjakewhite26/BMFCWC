@@ -59,9 +59,9 @@ describe('matchday cutoff', () => {
     expect(getGameDayCutoff([])).toBeNull()
   })
 
-  it('locks predictions one hour before the earliest kickoff', () => {
+  it('locks predictions one minute before the earliest kickoff', () => {
     const cutoff = getGameDayCutoff(fixtures)
-    expect(cutoff?.toISOString()).toBe('2026-06-15T18:00:00.000Z')
+    expect(cutoff?.toISOString()).toBe('2026-06-15T18:59:00.000Z')
   })
 
   describe('isGameDayPredictionsLocked', () => {
@@ -79,12 +79,12 @@ describe('matchday cutoff', () => {
     })
 
     it('is open before the cutoff when matchday is open', () => {
-      vi.setSystemTime(new Date('2026-06-15T17:59:00.000Z'))
+      vi.setSystemTime(new Date('2026-06-15T18:58:00.000Z'))
       expect(isGameDayPredictionsLocked(fixtures, true)).toBe(false)
     })
 
     it('is locked at the cutoff and after', () => {
-      vi.setSystemTime(new Date('2026-06-15T18:00:00.000Z'))
+      vi.setSystemTime(new Date('2026-06-15T18:59:00.000Z'))
       expect(isGameDayPredictionsLocked(fixtures, true)).toBe(true)
 
       vi.setSystemTime(new Date('2026-06-15T20:00:00.000Z'))
@@ -109,17 +109,17 @@ describe('fixture cutoff', () => {
     vi.useRealTimers()
   })
 
-  it('locks one hour before kickoff', () => {
-    expect(getFixtureCutoff(fixture.kickoff_utc).toISOString()).toBe('2026-06-15T18:00:00.000Z')
+  it('locks one minute before kickoff', () => {
+    expect(getFixtureCutoff(fixture.kickoff_utc).toISOString()).toBe('2026-06-15T18:59:00.000Z')
   })
 
   it('is editable before the fixture cutoff', () => {
-    vi.setSystemTime(new Date('2026-06-15T17:59:00.000Z'))
+    vi.setSystemTime(new Date('2026-06-15T18:58:00.000Z'))
     expect(isFixturePredictionsLocked(fixture, true)).toBe(false)
   })
 
   it('is locked at and after the fixture cutoff', () => {
-    vi.setSystemTime(new Date('2026-06-15T18:00:00.000Z'))
+    vi.setSystemTime(new Date('2026-06-15T18:59:00.000Z'))
     expect(isFixturePredictionsLocked(fixture, true)).toBe(true)
   })
 
@@ -142,12 +142,12 @@ describe('fixture cutoff', () => {
       ],
       true
     )
-    expect(cutoffs?.toISOString()).toBe('2026-06-15T21:00:00.000Z')
+    expect(cutoffs?.toISOString()).toBe('2026-06-15T21:59:00.000Z')
   })
 
   it('shows a countdown within 24 hours of locking', () => {
     vi.setSystemTime(new Date('2026-06-15T16:45:00.000Z'))
-    expect(getFixtureLockCountdownText(fixture.kickoff_utc)).toBe('locks in 1h 15m')
+    expect(getFixtureLockCountdownText(fixture.kickoff_utc)).toBe('locks in 2h 14m')
   })
 
   it('hides the countdown more than 24 hours before locking', () => {

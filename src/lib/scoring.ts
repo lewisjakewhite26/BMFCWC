@@ -22,11 +22,13 @@ export function getEarliestKickoff(fixtures: { kickoff_utc: string }[]): Date | 
   return new Date(Math.min(...times))
 }
 
-/** Predictions lock 1 hour before the first kickoff of the matchday */
+const PREDICTION_LOCK_MS = 60 * 1000
+
+/** Predictions lock 1 minute before the first kickoff of the matchday */
 export function getGameDayCutoff(fixtures: { kickoff_utc: string }[]): Date | null {
   const earliest = getEarliestKickoff(fixtures)
   if (!earliest) return null
-  return new Date(earliest.getTime() - 60 * 60 * 1000)
+  return new Date(earliest.getTime() - PREDICTION_LOCK_MS)
 }
 
 export function isGameDayPredictionsLocked(
@@ -49,9 +51,9 @@ type FixtureLockFields = {
   away_score: number | null
 }
 
-/** Predictions lock 1 hour before this fixture's kickoff */
+/** Predictions lock 1 minute before this fixture's kickoff */
 export function getFixtureCutoff(kickoffUtc: string): Date {
-  return new Date(new Date(kickoffUtc).getTime() - HOUR_MS)
+  return new Date(new Date(kickoffUtc).getTime() - PREDICTION_LOCK_MS)
 }
 
 export function isFixturePredictionsLocked(

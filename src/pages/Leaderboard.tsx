@@ -8,6 +8,7 @@ import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { usePrizePot } from '../hooks/usePrizePot'
 import { useAuth } from '../hooks/useAuth'
+import { ClubLogo } from '../components/ui/ClubLogo'
 
 export default function LeaderboardPage() {
   const { entries, loading } = useLeaderboard()
@@ -19,12 +20,9 @@ export default function LeaderboardPage() {
       <Navbar />
 
       <div className="max-w-3xl mx-auto px-4 py-5 sm:py-8 relative">
-        <img
-          src="/logo.png"
-          alt=""
+        <ClubLogo
           aria-hidden
           className="hidden sm:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 opacity-[0.04] pointer-events-none object-contain"
-          onError={(e) => { (e.target as HTMLImageElement).src = '/logo.svg' }}
         />
 
         <div className="relative z-10">

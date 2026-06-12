@@ -1,12 +1,20 @@
--- Repair fixtures prematurely locked by old matchday-wide lock_expired_fixtures logic
+-- Predictions lock 1 minute before kickoff (was 1 hour)
 
+-- Ensure score columns exist (some deployments may predate 001_schema)
 ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS home_score integer;
 ALTER TABLE fixtures ADD COLUMN IF NOT EXISTS away_score integer;
 
 UPDATE fixtures
 SET status = 'open'
 WHERE status = 'locked'
-  AND now() < kickoff_utc - interval '1 hour';
+  AND now() < kickoff_utc - interval '1 minute';
+
+CREATE OR REPLACE FUNCTION get_game_day_cutoff(p_game_day integer)
+RETURNS timestamptz AS $$
+  SELECT MIN(kickoff_utc) - interval '1 minute'
+  FROM fixtures
+  WHERE game_day = p_game_day;
+$$ LANGUAGE sql STABLE;
 
 CREATE OR REPLACE FUNCTION submit_prediction(
   p_user_id uuid,
@@ -33,7 +41,7 @@ BEGIN
     RAISE EXCEPTION 'Game day is not open';
   END IF;
 
-  IF now() >= fix.kickoff_utc - interval '1 hour' THEN
+  IF now() >= fix.kickoff_utc - interval '1 minute' THEN
     RAISE EXCEPTION 'Predictions are locked for this fixture';
   END IF;
 
@@ -50,4 +58,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+CREATE OR REPLACE FUNCTION lock_expired_fixtures()
+RETURNS void AS $$
+BEGIN
+  UPDATE fixtures f
+  SET status = 'locked'
+  FROM game_days gd
+  WHERE f.game_day = gd.game_day
+    AND gd.status = 'open'
+    AND f.status IN ('upcoming', 'open')
+    AND now() >= f.kickoff_utc - interval '1 minute';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION get_game_day_cutoff TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION submit_prediction TO anon, authenticated;

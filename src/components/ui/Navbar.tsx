@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useOpenMatchdayNumber } from '../../hooks/useOpenMatchdayNumber'
 import { PointsTotal } from './PointsTotal'
 import { PaymentStatusIndicator } from './PaymentStatusIndicator'
+import { ClubLogo } from './ClubLogo'
 
 interface NavbarProps {
   displayName?: string
@@ -35,14 +36,7 @@ export function Navbar({ displayName: propDisplayName, totalPoints: propPoints }
     <nav className="sticky top-0 z-50 glass-nav pt-[env(safe-area-inset-top)]">
       <div className="max-w-6xl mx-auto px-4 py-2.5 sm:py-3 flex items-center justify-between gap-3">
         <Link to={displayName ? '/dashboard' : '/'} className="flex items-center gap-2.5 shrink-0 touch-manipulation">
-          <img
-            src="/logo.png"
-            alt="BMFC"
-            className="h-10 w-10 sm:h-11 sm:w-11 object-contain drop-shadow-sm"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/logo.svg'
-            }}
-          />
+          <ClubLogo className="h-10 w-10 sm:h-11 sm:w-11 object-contain drop-shadow-sm" />
           <span className="font-display text-sm sm:text-lg text-brand-navy hidden sm:block tracking-tight">
             BMFC Predictor
           </span>

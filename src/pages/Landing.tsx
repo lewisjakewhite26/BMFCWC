@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Navbar } from '../components/ui/Navbar'
+import { ClubLogo } from '../components/ui/ClubLogo'
 import { PageShell } from '../components/ui/PageBackground'
 import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { usePrizePot } from '../hooks/usePrizePot'
@@ -339,7 +340,7 @@ const HOW_IT_WORKS = [
   {
     icon: '🔒',
     title: 'Confirm your predictions',
-    body: 'Submit your predictions before the matchday closes. They lock one hour before the first match kicks off.',
+    body: 'Submit your predictions before the matchday closes. Each fixture locks one minute before kickoff.',
   },
   {
     icon: '🏆',
@@ -421,12 +422,7 @@ export default function Landing() {
           <LandingHeroBackdrop containerRef={heroRef} />
 
           <div className="relative z-10 flex flex-col items-center text-center w-full max-w-[900px] mx-auto">
-            <img
-              src="/logo.png"
-              alt="BMFC"
-              className="h-20 w-20 object-contain drop-shadow-md mb-8"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/logo.svg' }}
-            />
+            <ClubLogo className="h-20 w-20 object-contain drop-shadow-md mb-8" />
 
             <h1
               className="font-display tracking-tight text-brand-navy leading-[1.05] max-w-[900px]"
