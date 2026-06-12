@@ -2,12 +2,12 @@ import type { MatchdayRecap, RecapTier } from '../types'
 
 export function getRecapTier(recap: MatchdayRecap): RecapTier {
   const { matchday_rank, matchday_total_players } = recap
-  const percentile = matchday_rank / Math.max(matchday_total_players, 1)
+  const total = Math.max(matchday_total_players, 1)
 
   if (matchday_rank === 1) return 'spotOn'
-  if (percentile <= 0.25) return 'great'
-  if (percentile <= 0.55) return 'solid'
-  if (percentile <= 0.8) return 'poor'
+  if (matchday_rank <= Math.ceil(total * 0.25)) return 'great'
+  if (matchday_rank <= Math.ceil(total * 0.55)) return 'solid'
+  if (matchday_rank <= Math.ceil(total * 0.8)) return 'poor'
   return 'nightmare'
 }
 
