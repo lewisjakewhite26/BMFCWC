@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { MatchScoreLine } from './MatchScoreLine'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { MatchScoreLine, type MatchScoreLineHandle } from './MatchScoreLine'
 import { PointsBadge } from './PointsBadge'
 import { formatKickoffLocal, getStageLabel } from '../../lib/scoring'
 import { FixtureLockCountdown } from './FixtureLockCountdown'
+import { SubmitPredictionButton } from './SubmitPredictionButton'
 import { hapticTap } from '../../lib/haptics'
 import type { Fixture, Prediction } from '../../types'
-
-type SaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error'
 
 interface MatchCardProps {
   fixture: Fixture
@@ -14,26 +13,37 @@ interface MatchCardProps {
   locked?: boolean
   onSave?: (fixtureId: number, home: number, away: number) => Promise<void>
   onConfirmChange?: (fixtureId: number, confirmed: boolean) => void
+  onRegisterFocus?: (focusHome: () => void) => (() => void) | void
+  onAdvanceToNext?: () => void
 }
 
-export function MatchCard({ fixture, prediction, locked = false, onSave, onConfirmChange }: MatchCardProps) {
+export function MatchCard({
+  fixture,
+  prediction,
+  locked = false,
+  onSave,
+  onConfirmChange,
+  onRegisterFocus,
+  onAdvanceToNext,
+}: MatchCardProps) {
   const hasResult = fixture.home_score !== null && fixture.away_score !== null
   const editable = !locked && !!onSave && !hasResult
 
   const [homeScore, setHomeScore] = useState<number | ''>(prediction?.predicted_home ?? '')
   const [awayScore, setAwayScore] = useState<number | ''>(prediction?.predicted_away ?? '')
   const [confirmed, setConfirmed] = useState(() => !!prediction)
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
-  const [locking, setLocking] = useState(false)
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const lastSaved = useRef({ home: prediction?.predicted_home, away: prediction?.predicted_away })
   const userHasEdited = useRef(false)
+  const scoreLineRef = useRef<MatchScoreLineHandle>(null)
+
+  useEffect(() => {
+    if (!onRegisterFocus || !editable) return
+    return onRegisterFocus(() => scoreLineRef.current?.focusHome()) ?? undefined
+  }, [onRegisterFocus, editable])
 
   useEffect(() => {
     if (prediction) {
       setHomeScore(prediction.predicted_home)
       setAwayScore(prediction.predicted_away)
-      lastSaved.current = { home: prediction.predicted_home, away: prediction.predicted_away }
       if (!userHasEdited.current) {
         setConfirmed(true)
       }
@@ -45,42 +55,9 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
   }, [confirmed, fixture.id, onConfirmChange])
 
   const persist = useCallback(async (home: number, away: number) => {
-    if (!onSave) return
-    setSaveStatus('saving')
-    try {
-      await onSave(fixture.id, home, away)
-      lastSaved.current = { home, away }
-      setSaveStatus('saved')
-    } catch {
-      setSaveStatus('error')
-      throw new Error('Save failed')
-    }
+    if (!onSave) throw new Error('Save unavailable')
+    await onSave(fixture.id, home, away)
   }, [fixture.id, onSave])
-
-  // Auto-save draft in the background — doesn't replace the explicit lock-in
-  useEffect(() => {
-    if (!editable) return
-    if (homeScore === '' || awayScore === '') {
-      setSaveStatus('idle')
-      return
-    }
-    if (
-      lastSaved.current.home === homeScore &&
-      lastSaved.current.away === awayScore
-    ) {
-      return
-    }
-
-    setSaveStatus('pending')
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      persist(homeScore as number, awayScore as number).catch(() => {})
-    }, 700)
-
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-    }
-  }, [homeScore, awayScore, editable, persist])
 
   const handleHomeChange = (value: number | '') => {
     userHasEdited.current = true
@@ -94,35 +71,12 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
     setAwayScore(value)
   }
 
-  const handleLockIn = async () => {
-    if (homeScore === '' || awayScore === '' || locking) return
-
-    setLocking(true)
-    try {
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-      if (lastSaved.current.home !== homeScore || lastSaved.current.away !== awayScore) {
-        await persist(homeScore as number, awayScore as number)
-      }
-      setConfirmed(true)
-      hapticTap()
-    } catch {
-      // saveStatus already shows error
-    } finally {
-      setLocking(false)
-    }
-  }
-
   const scoresComplete = homeScore !== '' && awayScore !== ''
-  const isLockedIn = confirmed && scoresComplete
+  const scoresChanged =
+    prediction?.predicted_home !== homeScore || prediction?.predicted_away !== awayScore
+  const isLockedIn = confirmed && scoresComplete && !scoresChanged
   const isAwaitingPick = editable && !isLockedIn
-  const showLockButton = editable && scoresComplete && !confirmed
-
-  const draftLabel = editable && !confirmed && saveStatus !== 'idle' ? {
-    pending: 'Draft saved soon…',
-    saving: 'Saving draft…',
-    saved: 'Draft saved',
-    error: 'Draft save failed',
-  }[saveStatus] : null
+  const showSubmitButton = editable && scoresComplete && (!confirmed || scoresChanged)
 
   const displayHome = editable ? homeScore : (prediction?.predicted_home ?? (homeScore !== '' ? homeScore : ''))
   const displayAway = editable ? awayScore : (prediction?.predicted_away ?? (awayScore !== '' ? awayScore : ''))
@@ -170,17 +124,6 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
               Submitted
             </span>
           )}
-          {draftLabel && (
-            <span
-              className={`text-[10px] sm:text-xs font-medium whitespace-nowrap ${
-                saveStatus === 'saved' ? 'text-gray-400' :
-                saveStatus === 'error' ? 'text-red-500' :
-                'text-gray-400'
-              }`}
-            >
-              {draftLabel}
-            </span>
-          )}
           {prediction && hasResult && <PointsBadge points={prediction.points_awarded} size="sm" />}
           {locked && !hasResult && (
             <span className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
@@ -191,6 +134,7 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
       </div>
 
       <MatchScoreLine
+        ref={scoreLineRef}
         homeFlag={fixture.home_flag}
         homeTeam={fixture.home_team}
         awayFlag={fixture.away_flag}
@@ -201,17 +145,18 @@ export function MatchCard({ fixture, prediction, locked = false, onSave, onConfi
         awaiting={isAwaitingPick}
         onHomeChange={editable ? handleHomeChange : undefined}
         onAwayChange={editable ? handleAwayChange : undefined}
+        onAwayComplete={editable ? onAdvanceToNext : undefined}
       />
 
-      {showLockButton && (
-        <button
-          type="button"
-          onClick={handleLockIn}
-          disabled={locking || saveStatus === 'saving'}
-          className="mt-4 w-full min-h-[48px] rounded-pill font-semibold text-white bg-brand-blue shadow-[0_4px_16px_rgba(43,95,192,0.25)] active:scale-[0.98] transition-transform touch-manipulation disabled:opacity-60 disabled:active:scale-100"
-        >
-          {locking || saveStatus === 'saving' ? 'Submitting…' : 'Submit prediction'}
-        </button>
+      {showSubmitButton && (
+        <SubmitPredictionButton
+          onSubmit={() => persist(homeScore as number, awayScore as number)}
+          onComplete={() => {
+            setConfirmed(true)
+            userHasEdited.current = false
+            hapticTap()
+          }}
+        />
       )}
 
       {editable && <FixtureLockCountdown kickoffUtc={fixture.kickoff_utc} />}

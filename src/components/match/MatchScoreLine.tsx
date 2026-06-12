@@ -1,6 +1,10 @@
-import { useRef } from 'react'
+import { forwardRef, useImperativeHandle, useRef } from 'react'
 import { CountryFlag } from './CountryFlag'
 import { ScoreInput } from './ScoreInput'
+
+export interface MatchScoreLineHandle {
+  focusHome: () => void
+}
 
 interface MatchScoreLineProps {
   homeFlag: string | null
@@ -13,6 +17,7 @@ interface MatchScoreLineProps {
   awaiting?: boolean
   onHomeChange?: (value: number | '') => void
   onAwayChange?: (value: number | '') => void
+  onAwayComplete?: () => void
 }
 
 function ScoreDisplay({ score }: { score: number | '' }) {
@@ -23,20 +28,33 @@ function ScoreDisplay({ score }: { score: number | '' }) {
   )
 }
 
-export function MatchScoreLine({
-  homeFlag,
-  homeTeam,
-  awayFlag,
-  awayTeam,
-  homeScore,
-  awayScore,
-  editable = false,
-  awaiting = false,
-  onHomeChange,
-  onAwayChange,
-}: MatchScoreLineProps) {
+export const MatchScoreLine = forwardRef<MatchScoreLineHandle, MatchScoreLineProps>(function MatchScoreLine(
+  {
+    homeFlag,
+    homeTeam,
+    awayFlag,
+    awayTeam,
+    homeScore,
+    awayScore,
+    editable = false,
+    awaiting = false,
+    onHomeChange,
+    onAwayChange,
+    onAwayComplete,
+  },
+  ref
+) {
   const homeInputRef = useRef<HTMLInputElement>(null)
   const awayInputRef = useRef<HTMLInputElement>(null)
+
+  useImperativeHandle(ref, () => ({
+    focusHome: () => {
+      const input = homeInputRef.current
+      if (!input) return
+      input.focus({ preventScroll: true })
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    },
+  }))
 
   return (
     <div className="flex items-center gap-1 sm:gap-3 py-1">
@@ -62,6 +80,7 @@ export function MatchScoreLine({
               ref={awayInputRef}
               value={awayScore}
               onChange={onAwayChange}
+              onAdvance={onAwayComplete}
               awaiting={awaiting}
               ariaLabel={`Predicted score for ${awayTeam}`}
             />
@@ -80,4 +99,4 @@ export function MatchScoreLine({
       </div>
     </div>
   )
-}
+})
