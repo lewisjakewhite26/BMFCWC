@@ -282,7 +282,7 @@
   -webkit-backdrop-filter: blur(4px);
 }
 
-.recap-backdrop.recap-modal-legendary {
+.recap-backdrop.recap-modal-spotOn {
   background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.25) 0%, rgba(13, 27, 75, 0.65) 70%);
 }
 
@@ -291,11 +291,11 @@
 }
 
 .recap-backdrop.recap-modal-poor,
-.recap-backdrop.recap-modal-rough {
+.recap-backdrop.recap-modal-nightmare {
   background: radial-gradient(ellipse at center, rgba(220, 38, 38, 0.22) 0%, rgba(13, 27, 75, 0.65) 70%);
 }
 
-.recap-modal-card.recap-modal-legendary {
+.recap-modal-card.recap-modal-spotOn {
   box-shadow: 0 0 48px rgba(212, 175, 55, 0.45), 0 8px 32px rgba(13, 27, 75, 0.12);
   border-color: rgba(212, 175, 55, 0.35);
   animation: recap-glow-gold 2.4s ease-in-out infinite;
@@ -317,7 +317,7 @@
   animation: recap-shake 0.55s ease-in-out;
 }
 
-.recap-modal-card.recap-modal-rough {
+.recap-modal-card.recap-modal-nightmare {
   box-shadow: 0 0 36px rgba(220, 38, 38, 0.5);
   border-color: rgba(220, 38, 38, 0.45);
   animation: recap-shake 0.7s ease-in-out, recap-glow-red 1.8s ease-in-out infinite;

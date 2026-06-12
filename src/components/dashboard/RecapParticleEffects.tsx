@@ -1,15 +1,14 @@
 import { useMemo } from 'react'
 import type { RecapTier } from '../../types'
+import { tierEmoji } from '../../lib/recapTier'
 
-const POSITIVE_PARTICLES: Record<RecapTier, string[]> = {
-  legendary: ['🎉', '🏆', '⚽', '✨', '🥇', '💫'],
-  great: ['🎉', '⚽', '✨', '👏'],
-  solid: ['⚽', '✨', '👍'],
-  poor: [],
-  rough: [],
+const PARTICLE_COUNTS: Record<RecapTier, number> = {
+  spotOn: 36,
+  great: 24,
+  solid: 14,
+  poor: 16,
+  nightmare: 28,
 }
-
-const NEGATIVE_PARTICLES = ['👎', '😬', '💀', '👎', '📉']
 
 interface RecapParticleEffectsProps {
   tier: RecapTier
@@ -20,20 +19,16 @@ export function RecapParticleEffects({ tier, active }: RecapParticleEffectsProps
   const particles = useMemo(() => {
     if (!active) return []
 
-    const emojis =
-      tier === 'rough' || tier === 'poor'
-        ? NEGATIVE_PARTICLES
-        : POSITIVE_PARTICLES[tier]
-
-    const count = tier === 'legendary' ? 36 : tier === 'great' ? 24 : tier === 'solid' ? 14 : tier === 'poor' ? 16 : 28
+    const emoji = tierEmoji(tier)
+    const count = PARTICLE_COUNTS[tier]
 
     return Array.from({ length: count }, (_, i) => ({
       id: i,
-      emoji: emojis[i % emojis.length],
+      emoji,
       left: `${(i * 17 + 7) % 100}%`,
       delay: `${(i * 0.13) % 2.5}s`,
       duration: `${2.2 + (i % 5) * 0.35}s`,
-      size: tier === 'legendary' ? '1.35rem' : tier === 'rough' ? '1.25rem' : '1.1rem',
+      size: tier === 'spotOn' ? '1.35rem' : tier === 'nightmare' ? '1.25rem' : '1.1rem',
     }))
   }, [tier, active])
 

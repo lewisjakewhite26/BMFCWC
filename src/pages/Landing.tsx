@@ -354,13 +354,13 @@ const POINTS_CARDS = [
     points: 10,
     colorClass: 'text-brand-gold',
     title: 'Correct Score',
-    body: 'Exact scoreline correct — if you predicted 2–1 and it finished 2–1, you get 10 points.',
+    body: 'Exact scoreline correct: if you predicted 2–1 and it finished 2–1, you get 10 points.',
   },
   {
     points: 5,
     colorClass: 'text-brand-blue',
     title: 'Correct Result',
-    body: 'Correct result but wrong score — if you predicted 2–1 and it finished 3–1, you still get 5 points.',
+    body: 'Correct result but wrong score: if you predicted 2–1 and it finished 3–1, you still get 5 points.',
   },
 ]
 

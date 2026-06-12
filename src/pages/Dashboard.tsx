@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { Navbar } from '../components/ui/Navbar'
 import { PageShell } from '../components/ui/PageBackground'
 import { GameDayPanel } from '../components/match/GameDayPanel'
@@ -14,6 +14,7 @@ import { fetchGroupStageGameDays, fetchOpenGameDay, fetchFixturesByGameDay } fro
 import { getDefaultGroupTab, getMatchdayTabState } from '../lib/matchdays'
 import { getEarliestKickoff } from '../lib/scoring'
 import { getTimeGreeting } from '../lib/greeting'
+import { hapticMatchdayLocked } from '../lib/haptics'
 import { isDevBypassSession, MOCK_GAME_DAYS, getMockFixturesByGameDay } from '../lib/devBypass'
 import { useMatchdayRecap } from '../hooks/useMatchdayRecap'
 import { MatchdayRecapModal } from '../components/dashboard/MatchdayRecapModal'
@@ -31,8 +32,11 @@ export default function Dashboard() {
   const [selectedGroupDay, setSelectedGroupDay] = useState(1)
   const [loadingDays, setLoadingDays] = useState(true)
   const [lockedFixtures, setLockedFixtures] = useState<Set<number>>(new Set())
+  const knockoutPrevCount = useRef<number | null>(null)
+  const initialConfirmSyncDone = useRef(false)
 
   const selectedGameDay = groupGameDays.find((g) => g.game_day === selectedGroupDay) ?? null
+  const matchdayOpen = selectedGameDay?.status === 'open'
 
   const { fixtures, predictions, loading: loadingFixtures, submitPrediction, reload } = usePredictions(
     selectedGroupDay
@@ -78,25 +82,68 @@ export default function Dashboard() {
   }, [user])
 
   useEffect(() => {
+    initialConfirmSyncDone.current = false
+  }, [selectedGroupDay])
+
+  useEffect(() => {
     if (!loadingFixtures) {
       setLockedFixtures(new Set(predictions.keys()))
+      queueMicrotask(() => {
+        initialConfirmSyncDone.current = true
+      })
     }
   }, [loadingFixtures, predictions, selectedGroupDay])
 
-  const handleConfirmChange = useCallback((fixtureId: number, confirmed: boolean) => {
-    setLockedFixtures((prev) => {
-      const next = new Set(prev)
-      if (confirmed) next.add(fixtureId)
-      else next.delete(fixtureId)
-      return next
-    })
-  }, [])
+  const handleConfirmChange = useCallback(
+    (fixtureId: number, confirmed: boolean) => {
+      setLockedFixtures((prev) => {
+        const next = new Set(prev)
+        if (confirmed) next.add(fixtureId)
+        else next.delete(fixtureId)
+
+        if (
+          initialConfirmSyncDone.current &&
+          confirmed &&
+          matchdayOpen &&
+          fixtures.length > 0 &&
+          next.size === fixtures.length &&
+          prev.size < fixtures.length
+        ) {
+          hapticMatchdayLocked()
+        }
+        return next
+      })
+    },
+    [matchdayOpen, fixtures.length]
+  )
 
   const handleSave = async (fixtureId: number, home: number, away: number) => {
     await submitPrediction(fixtureId, home, away)
   }
 
   const lockedCount = fixtures.filter((f) => lockedFixtures.has(f.id)).length
+
+  const knockoutLockedCount = knockoutPredictions.fixtures.filter((f) =>
+    knockoutPredictions.predictions.has(f.id)
+  ).length
+  const knockoutTotal = knockoutPredictions.fixtures.length
+  const knockoutOpen = knockoutGameDay?.status === 'open'
+
+  useEffect(() => {
+    knockoutPrevCount.current = null
+  }, [knockoutGameDay?.game_day])
+
+  useEffect(() => {
+    if (!knockoutOpen || knockoutTotal === 0) {
+      knockoutPrevCount.current = null
+      return
+    }
+    const prev = knockoutPrevCount.current
+    knockoutPrevCount.current = knockoutLockedCount
+    if (prev !== null && prev < knockoutTotal && knockoutLockedCount === knockoutTotal) {
+      hapticMatchdayLocked()
+    }
+  }, [knockoutLockedCount, knockoutTotal, knockoutOpen])
   const loading = loadingDays || (loadingFixtures && fixtures.length === 0)
   const firstKickoff = useMemo(
     () => (selectedGameDay?.status === 'open' ? getEarliestKickoff(fixtures) : null),
@@ -105,7 +152,6 @@ export default function Dashboard() {
   const tabState = selectedGameDay
     ? getMatchdayTabState(selectedGameDay, fixtures)
     : 'locked'
-  const matchdayOpen = selectedGameDay?.status === 'open'
   const hasOpenGroupMatchday = groupGameDays.some((g) => g.status === 'open')
   const hasAnyContent = hasOpenGroupMatchday || knockoutGameDay !== null || groupGameDays.some((g) => g.status === 'completed')
 
@@ -131,7 +177,7 @@ export default function Dashboard() {
             {getTimeGreeting()}, {user?.display_name?.split(' ')[0] ?? 'there'}
           </h1>
           <p className="text-sm sm:text-base text-gray-500">
-            Pick your scores for each group game — each fixture locks one minute before kickoff
+            Pick your scores for each group game. Each fixture locks one minute before kickoff.
           </p>
         </div>
 

@@ -13,7 +13,7 @@ function scoreLabel(fixture: Fixture): string {
   if (fixture.home_score !== null && fixture.away_score !== null) {
     return `${fixture.home_score}–${fixture.away_score}`
   }
-  return '—'
+  return '-'
 }
 
 export function FixtureBrowser({ fixtures, gameDays }: FixtureBrowserProps) {

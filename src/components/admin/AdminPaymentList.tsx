@@ -95,7 +95,7 @@ export function AdminPaymentList({
 
       {devMode && (
         <p className="px-4 py-3 text-xs text-gray-400 border-t border-brand-blue/10">
-          Preview mode — payment ticks are disabled
+          Preview mode. Payment ticks are disabled.
         </p>
       )}
     </div>

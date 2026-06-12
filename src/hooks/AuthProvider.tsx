@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, passcode: string) => {
     if (!isSupabaseConfigured) {
-      throw new Error('Sign-in is unavailable — Supabase is not configured for this deployment.')
+      throw new Error('Sign-in is unavailable. Supabase is not configured for this deployment.')
     }
 
     const { data, error } = await supabase.rpc('login_user', {
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (username: string, displayName: string, passcode: string) => {
     if (!isSupabaseConfigured) {
-      throw new Error('Sign-up is unavailable — Supabase is not configured for this deployment.')
+      throw new Error('Sign-up is unavailable. Supabase is not configured for this deployment.')
     }
 
     const { data, error } = await supabase.rpc('register_user', {
@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       throw new Error(getAuthErrorMessage(error, 'Signup failed'))
     }
-    if (!data) throw new Error('Signup failed — no account was returned')
+    if (!data) throw new Error('Signup failed. No account was returned.')
 
     const userData = data as User
     saveSession(userData)

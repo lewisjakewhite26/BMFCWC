@@ -12,11 +12,11 @@ function ScoreLegend() {
       <div className="flex gap-4 sm:flex-wrap sm:gap-x-6 sm:gap-y-2 text-xs sm:text-sm text-gray-600 w-max sm:w-auto">
         <span className="flex items-center gap-2 whitespace-nowrap">
           <span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" aria-hidden />
-          Exact — 10 pts
+          Exact, 10 pts
         </span>
         <span className="flex items-center gap-2 whitespace-nowrap">
           <span className="w-3 h-3 rounded-full bg-brand-blue/45 shrink-0" aria-hidden />
-          Result — 5 pts
+          Result, 5 pts
         </span>
         <span className="flex items-center gap-2 whitespace-nowrap">
           <span className="w-3 h-3 rounded-full bg-gray-300/60 shrink-0" aria-hidden />

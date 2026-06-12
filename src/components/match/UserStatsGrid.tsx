@@ -6,22 +6,22 @@ export function UserStatsGrid() {
   const items = [
     {
       label: 'Total Points',
-      value: loading ? '—' : String(stats.total_points),
+      value: loading ? '-' : String(stats.total_points),
       highlight: true,
     },
     {
       label: 'League Position',
-      value: loading || stats.league_position === null ? '—' : `#${stats.league_position}`,
+      value: loading || stats.league_position === null ? '-' : `#${stats.league_position}`,
       highlight: false,
     },
     {
       label: 'Best Matchday',
-      value: loading || stats.best_matchday_points === null ? '—' : String(stats.best_matchday_points),
+      value: loading || stats.best_matchday_points === null ? '-' : String(stats.best_matchday_points),
       highlight: false,
     },
     {
       label: 'Points off Top',
-      value: loading ? '—' : String(stats.points_off_top),
+      value: loading ? '-' : String(stats.points_off_top),
       highlight: false,
     },
   ]

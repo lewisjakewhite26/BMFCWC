@@ -31,9 +31,9 @@ export function isDevBypassSession(user: User | null | undefined): boolean {
 }
 
 export const MOCK_GAME_DAYS: GameDay[] = [
-  { id: 1, game_day: 1, label: 'Group Stage — Matchday 1', status: 'open', opened_at: '2026-06-01T12:00:00.000Z', completed_at: null },
-  { id: 2, game_day: 2, label: 'Group Stage — Matchday 2', status: 'open', opened_at: new Date().toISOString(), completed_at: null },
-  { id: 3, game_day: 3, label: 'Group Stage — Matchday 3', status: 'open', opened_at: new Date().toISOString(), completed_at: null },
+  { id: 1, game_day: 1, label: 'Group Stage, Matchday 1', status: 'open', opened_at: '2026-06-01T12:00:00.000Z', completed_at: null },
+  { id: 2, game_day: 2, label: 'Group Stage, Matchday 2', status: 'open', opened_at: new Date().toISOString(), completed_at: null },
+  { id: 3, game_day: 3, label: 'Group Stage, Matchday 3', status: 'open', opened_at: new Date().toISOString(), completed_at: null },
 ]
 
 export const MOCK_FIXTURES: Fixture[] = [
@@ -165,7 +165,7 @@ export const MOCK_HISTORY_GAME_DAYS: GameDay[] = [
   {
     id: 1,
     game_day: 1,
-    label: 'Group Stage — Matchday 1',
+    label: 'Group Stage, Matchday 1',
     status: 'completed',
     opened_at: '2026-06-01T12:00:00.000Z',
     completed_at: '2026-06-03T23:00:00.000Z',

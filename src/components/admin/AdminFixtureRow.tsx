@@ -31,7 +31,7 @@ export function AdminFixtureRow({ fixture, onSubmitResult }: AdminFixtureRowProp
     setLoading(true)
     try {
       await onSubmitResult(fixture.id, homeScore as number, awayScore as number)
-      toast.success(hasResult ? 'Score updated — points recalculated' : 'Score saved and points updated')
+      toast.success(hasResult ? 'Score updated. Points recalculated.' : 'Score saved and points updated')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to confirm score')
     } finally {
@@ -58,7 +58,7 @@ export function AdminFixtureRow({ fixture, onSubmitResult }: AdminFixtureRowProp
           onChange={setHomeScore}
           ariaLabel={`${fixture.home_team} score`}
         />
-        <span className="text-gray-400">—</span>
+        <span className="text-gray-400">-</span>
         <ScoreInput
           value={awayScore}
           onChange={setAwayScore}

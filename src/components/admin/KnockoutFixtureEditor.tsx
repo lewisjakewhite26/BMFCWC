@@ -18,7 +18,7 @@ export function KnockoutFixtureEditor({ fixtures, devMode = false, onSaved }: Kn
   if (knockoutFixtures.length === 0) {
     return (
       <div className="admin-inner-card p-6 text-center text-gray-500 text-sm">
-        No open knockout fixtures to edit — either teams are already set or the matchday has started.
+        No open knockout fixtures to edit. Either teams are already set or the matchday has started.
       </div>
     )
   }

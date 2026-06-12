@@ -6,7 +6,6 @@ import {
   formatCountdownClock,
   getCountdownUrgency,
 } from '../../lib/countdown'
-import { hapticCelebrate } from '../../lib/haptics'
 import type { MatchdayTabState } from '../../lib/matchdays'
 
 interface DashboardStatusBannerProps {
@@ -48,7 +47,6 @@ export function DashboardStatusBanner({
     kickoffMs !== null ? kickoffMs - Date.now() : 0
   )
   const kickoffReachedCalled = useRef(false)
-  const wasComplete = useRef(false)
   const onKickoffReachedRef = useRef(onKickoffReached)
   onKickoffReachedRef.current = onKickoffReached
 
@@ -73,18 +71,10 @@ export function DashboardStatusBanner({
     return () => window.clearInterval(id)
   }, [kickoffMs, showKickoffCountdown])
 
-  useEffect(() => {
-    if (allSubmitted && hasOpenMatchday && total > 0 && !wasComplete.current) {
-      wasComplete.current = true
-      hapticCelebrate()
-    }
-    if (!allSubmitted) wasComplete.current = false
-  }, [allSubmitted, hasOpenMatchday, total])
-
   if (tabState === 'complete') {
     return (
       <div className={`rounded-2xl px-4 py-4 ${bannerClass('complete')}`}>
-        <p className="text-sm font-medium text-emerald-700">This matchday is complete — view your results below.</p>
+        <p className="text-sm font-medium text-emerald-700">This matchday is complete. View your results below.</p>
       </div>
     )
   }

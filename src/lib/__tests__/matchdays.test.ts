@@ -10,7 +10,7 @@ import type { Fixture, GameDay } from '../../types'
 const openDay = (gameDay: number): GameDay => ({
   id: gameDay,
   game_day: gameDay,
-  label: `Group Stage — Matchday ${gameDay}`,
+  label: `Group Stage, Matchday ${gameDay}`,
   status: 'open',
   opened_at: '2026-06-01T12:00:00.000Z',
   completed_at: null,

@@ -198,7 +198,7 @@ export default function AdminTechnical() {
           <ol className="list-decimal list-inside space-y-1 text-gray-600">
             <li>When teams are known, open <strong>Knockout setup</strong> and replace placeholders (e.g. “Group A Winner”).</li>
             <li>In <strong>Matchday manager</strong>, open that matchday so players can predict.</li>
-            <li>Enter final scores in <strong>Manual result entry</strong> — same as group stage.</li>
+            <li>Enter final scores in <strong>Manual result entry</strong>, same as group stage.</li>
           </ol>
         </div>
 
@@ -263,7 +263,7 @@ export default function AdminTechnical() {
 
         <AdminSection
           title="Fixture schedule"
-          description="Read-only view of every match — filter by matchday or show knockout placeholders still needing real team names."
+          description="Read-only view of every match. Filter by matchday or show knockout placeholders still needing real team names."
         >
           <ErrorBoundary>
             {loading ? (

@@ -152,7 +152,7 @@ export function AdminMissingPredictions({
       ) : fixtureCount === 0 ? (
         <div className="p-8 text-center text-gray-500 text-sm">No fixtures on this matchday yet.</div>
       ) : devMode ? (
-        <div className="p-8 text-center text-gray-500 text-sm">Preview mode — no live data.</div>
+        <div className="p-8 text-center text-gray-500 text-sm">Preview mode. No live data.</div>
       ) : incomplete.length === 0 ? (
         <div className="p-8 text-center">
           <p className="text-emerald-700 font-medium">Everyone has submitted for this matchday.</p>

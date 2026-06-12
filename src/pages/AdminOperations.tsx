@@ -64,7 +64,7 @@ export default function AdminOperations() {
 
         <AdminSection
           title="Who still needs to predict"
-          description="Players missing picks for the selected matchday — chase them before the cutoff."
+          description="Players missing picks for the selected matchday. Chase them before the cutoff."
         >
           <ErrorBoundary>
             {loading ? (
@@ -83,7 +83,7 @@ export default function AdminOperations() {
 
         <AdminSection
           title="View predictions"
-          description="See what everyone guessed — filter by matchday or player."
+          description="See what everyone guessed. Filter by matchday or player."
         >
           <ErrorBoundary>
             {loading ? (

@@ -1,10 +1,11 @@
 export type HapticId =
   | 'saveSuccess'
-  | 'celebrate'
-  | 'recapSolid'
+  | 'matchdayLocked'
+  | 'recapSpotOn'
   | 'recapGreat'
+  | 'recapSolid'
   | 'recapPoor'
-  | 'recapLegendary'
+  | 'recapNightmare'
 
 export interface HapticFeedbackOption {
   id: HapticId
@@ -17,57 +18,57 @@ const STORAGE_KEY = 'bmfc_haptics_enabled'
 export const HAPTICS_CHANGE_EVENT = 'bmfc-haptics-change'
 
 const PATTERNS: Record<HapticId, number | number[]> = {
-  /** Crisp double-tick when a prediction auto-saves */
-  saveSuccess: [8, 48, 14, 36, 20],
-  /** Gentle double pulse when every fixture on the matchday is picked */
-  celebrate: [12, 40, 16, 44, 22],
-  /** Matchday recap — solid performance */
-  recapSolid: [14, 32, 18, 36, 24],
-  /** Matchday recap — great performance */
-  recapGreat: [16, 28, 22, 32, 28, 36, 32],
-  /** Matchday recap — poor / rough performance */
-  recapPoor: [80, 36, 80, 36, 100],
-  /** Matchday recap — legendary finale */
-  recapLegendary: [10, 22, 16, 22, 28, 22, 38, 28, 48, 36, 64],
+  saveSuccess: [60],
+  matchdayLocked: [100, 80, 100, 50, 100, 80, 100, 50, 400],
+  recapSpotOn: [40, 30, 40, 30, 40, 30, 40, 30, 200],
+  recapGreat: [80, 60, 80, 60, 250],
+  recapSolid: [120, 100, 120],
+  recapPoor: [300],
+  recapNightmare: [600],
 }
 
-/** All haptic patterns used in the app — shown on Profile */
 export const HAPTIC_FEEDBACK_OPTIONS: HapticFeedbackOption[] = [
   {
     id: 'saveSuccess',
     label: 'Prediction saved',
-    description: 'Short double-tick confirmation',
+    description: 'Single crisp tap',
     when: 'Each time a score auto-saves',
   },
   {
-    id: 'celebrate',
-    label: 'Matchday complete',
-    description: 'Soft double pulse',
+    id: 'matchdayLocked',
+    label: 'Matchday locked',
+    description: "Football's Coming Home hook",
     when: 'All fixtures on the open matchday are picked',
   },
   {
-    id: 'recapSolid',
-    label: 'Recap — solid',
-    description: 'Steady triple pulse',
-    when: 'Matchday recap for a decent return',
+    id: 'recapSpotOn',
+    label: 'Recap: Spot on 🥇',
+    description: 'Rapid flutter then punch',
+    when: 'Matchday recap when you finish 1st',
   },
   {
     id: 'recapGreat',
-    label: 'Recap — great',
-    description: 'Rising rhythm',
-    when: 'Matchday recap for a strong return',
+    label: 'Recap: Great ⭐',
+    description: 'Quick-quick-long',
+    when: 'Matchday recap in the top 25%',
+  },
+  {
+    id: 'recapSolid',
+    label: 'Recap: Solid 🎯',
+    description: 'Two medium taps',
+    when: 'Matchday recap in the top 55%',
   },
   {
     id: 'recapPoor',
-    label: 'Recap — rough',
-    description: 'Long buzzes',
-    when: 'Matchday recap for a poor return',
+    label: 'Recap: Poor 😬',
+    description: 'Slow deflating buzz',
+    when: 'Matchday recap in the bottom 45%',
   },
   {
-    id: 'recapLegendary',
-    label: 'Recap — legendary',
-    description: 'Celebratory burst',
-    when: 'Matchday recap for a top-tier return',
+    id: 'recapNightmare',
+    label: 'Recap: Nightmare 💩',
+    description: 'Single long flat drone',
+    when: 'Matchday recap in the bottom 20%',
   },
 ]
 
@@ -108,27 +109,46 @@ export function hapticSaveSuccess() {
   triggerHaptic('saveSuccess')
 }
 
-export function hapticCelebrate() {
-  triggerHaptic('celebrate')
+export function hapticMatchdayLocked() {
+  triggerHaptic('matchdayLocked')
 }
 
-export function hapticRecapSolid() {
-  triggerHaptic('recapSolid')
+export function hapticRecapSpotOn() {
+  triggerHaptic('recapSpotOn')
 }
 
 export function hapticRecapGreat() {
   triggerHaptic('recapGreat')
 }
 
+export function hapticRecapSolid() {
+  triggerHaptic('recapSolid')
+}
+
 export function hapticRecapPoor() {
   triggerHaptic('recapPoor')
 }
 
-export function hapticRecapLegendary() {
-  triggerHaptic('recapLegendary')
+export function hapticRecapNightmare() {
+  triggerHaptic('recapNightmare')
 }
 
-/** @deprecated Use hapticSaveSuccess */
-export function hapticTap() {
-  hapticSaveSuccess()
+export function triggerRecapTierHaptic(tier: import('../types').RecapTier): void {
+  switch (tier) {
+    case 'spotOn':
+      hapticRecapSpotOn()
+      break
+    case 'great':
+      hapticRecapGreat()
+      break
+    case 'solid':
+      hapticRecapSolid()
+      break
+    case 'poor':
+      hapticRecapPoor()
+      break
+    case 'nightmare':
+      hapticRecapNightmare()
+      break
+  }
 }

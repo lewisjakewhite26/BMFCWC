@@ -1,19 +1,14 @@
 import type { MatchdayRecap, RecapTier } from '../types'
 
 export function getRecapTier(recap: MatchdayRecap): RecapTier {
-  const { matchday_points, matchday_rank, matchday_total_players, correct_scores } = recap
-
-  if (matchday_points === 0) return 'rough'
-
+  const { matchday_rank, matchday_total_players } = recap
   const percentile = matchday_rank / Math.max(matchday_total_players, 1)
 
-  if (matchday_rank === 1 || (correct_scores >= 3 && matchday_points >= 25)) {
-    return 'legendary'
-  }
-  if (percentile <= 0.25 || matchday_points >= 20) return 'great'
-  if (percentile <= 0.55 || matchday_points >= 10) return 'solid'
+  if (matchday_rank === 1) return 'spotOn'
+  if (percentile <= 0.25) return 'great'
+  if (percentile <= 0.55) return 'solid'
   if (percentile <= 0.8) return 'poor'
-  return 'rough'
+  return 'nightmare'
 }
 
 export function ordinal(n: number): string {
@@ -29,10 +24,20 @@ export function ordinal(n: number): string {
 
 export function tierHeadline(tier: RecapTier): string {
   switch (tier) {
-    case 'legendary': return 'Outstanding round'
+    case 'spotOn': return 'Spot on'
     case 'great': return 'Strong round'
     case 'solid': return 'Decent round'
     case 'poor': return 'Tough round'
-    case 'rough': return 'Rough round'
+    case 'nightmare': return 'Nightmare round'
+  }
+}
+
+export function tierEmoji(tier: RecapTier): string {
+  switch (tier) {
+    case 'spotOn': return '🥇'
+    case 'great': return '⭐'
+    case 'solid': return '🎯'
+    case 'poor': return '😬'
+    case 'nightmare': return '💩'
   }
 }

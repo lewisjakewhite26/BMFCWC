@@ -1,39 +1,16 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { MatchdayRecap, RecapTier } from '../../types'
-import { ordinal, tierHeadline } from '../../lib/recapTier'
-import {
-  hapticRecapGreat,
-  hapticRecapLegendary,
-  hapticRecapPoor,
-  hapticRecapSolid,
-} from '../../lib/haptics'
+import { ordinal, tierEmoji, tierHeadline } from '../../lib/recapTier'
+import { triggerRecapTierHaptic } from '../../lib/haptics'
 import { RecapParticleEffects } from './RecapParticleEffects'
 
 const TIER_MODAL_CLASS: Record<RecapTier, string> = {
-  legendary: 'recap-modal-legendary',
+  spotOn: 'recap-modal-spotOn',
   great: 'recap-modal-great',
   solid: 'recap-modal-solid',
   poor: 'recap-modal-poor',
-  rough: 'recap-modal-rough',
-}
-
-function triggerTierHaptic(tier: RecapTier) {
-  switch (tier) {
-    case 'legendary':
-      hapticRecapLegendary()
-      break
-    case 'great':
-      hapticRecapGreat()
-      break
-    case 'solid':
-      hapticRecapSolid()
-      break
-    case 'poor':
-    case 'rough':
-      hapticRecapPoor()
-      break
-  }
+  nightmare: 'recap-modal-nightmare',
 }
 
 interface MatchdayRecapModalProps {
@@ -52,10 +29,11 @@ export function MatchdayRecapModal({
   onDismiss,
 }: MatchdayRecapModalProps) {
   useEffect(() => {
-    triggerTierHaptic(tier)
+    triggerRecapTierHaptic(tier)
   }, [tier, recap.game_day])
 
   const label = recap.label.replace(/Game Day/gi, 'Matchday')
+  const emoji = tierEmoji(tier)
 
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
@@ -87,6 +65,7 @@ export function MatchdayRecapModal({
           {label}
         </p>
         <h2 id="recap-title" className="font-display text-2xl sm:text-3xl text-brand-navy text-center mb-1">
+          <span className="mr-2" aria-hidden>{emoji}</span>
           {tierHeadline(tier)}
         </h2>
         <p className="text-center text-gray-500 text-sm mb-6">Your results are in</p>

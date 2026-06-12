@@ -84,7 +84,7 @@ export interface MatchdayRecap {
   total_points: number
 }
 
-export type RecapTier = 'legendary' | 'great' | 'solid' | 'poor' | 'rough'
+export type RecapTier = 'spotOn' | 'great' | 'solid' | 'poor' | 'nightmare'
 
 export type FixtureWithPrediction = Fixture & {
   prediction?: Prediction

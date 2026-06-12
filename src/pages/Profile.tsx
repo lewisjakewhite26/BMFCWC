@@ -26,7 +26,7 @@ function HapticToggle({
         <p className="text-sm text-gray-500 mt-0.5">
           {supported
             ? 'Vibration on saves, milestones, and recaps'
-            : 'Not supported in this browser — try on your phone'}
+            : 'Not supported in this browser. Try on your phone.'}
         </p>
       </div>
       <button

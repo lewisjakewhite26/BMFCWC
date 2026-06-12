@@ -23,7 +23,7 @@ interface MatchScoreLineProps {
 function ScoreDisplay({ score }: { score: number | '' }) {
   return (
     <span className="w-7 sm:w-9 text-center text-xl sm:text-3xl font-mono font-bold text-brand-navy tabular-nums">
-      {score !== '' ? score : '—'}
+      {score !== '' ? score : '-'}
     </span>
   )
 }
@@ -75,7 +75,7 @@ export const MatchScoreLine = forwardRef<MatchScoreLineHandle, MatchScoreLinePro
               ariaLabel={`Predicted score for ${homeTeam}`}
             />
             <span className={`font-light text-lg sm:text-xl select-none ${awaiting ? 'text-brand-gold/40' : 'text-gray-400'}`}>
-              —
+              -
             </span>
             <ScoreInput
               ref={awayInputRef}
@@ -89,7 +89,7 @@ export const MatchScoreLine = forwardRef<MatchScoreLineHandle, MatchScoreLinePro
         ) : (
           <>
             <ScoreDisplay score={homeScore} />
-            <span className="text-gray-400 font-light text-lg sm:text-xl select-none">—</span>
+            <span className="text-gray-400 font-light text-lg sm:text-xl select-none">-</span>
             <ScoreDisplay score={awayScore} />
           </>
         )}

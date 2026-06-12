@@ -164,7 +164,7 @@ export function AdminPredictionsAudit({
         <div className="p-8 text-center text-gray-500 text-sm animate-pulse">Loading predictions…</div>
       ) : rows.length === 0 ? (
         <div className="p-8 text-center text-gray-500 text-sm">
-          {devMode ? 'Predictions audit (preview only — no data in dev bypass)' : 'No predictions match these filters'}
+          {devMode ? 'Predictions audit (preview only, no data in dev bypass)' : 'No predictions match these filters'}
         </div>
       ) : (
         <div className="overflow-x-auto max-h-[560px] overflow-y-auto">
@@ -206,13 +206,13 @@ export function AdminPredictionsAudit({
                       {row.predicted_home}–{row.predicted_away}
                     </td>
                     <td className="p-3 text-center font-mono tabular-nums text-gray-600">
-                      {hasResult ? `${row.actual_home}–${row.actual_away}` : '—'}
+                      {hasResult ? `${row.actual_home}–${row.actual_away}` : '-'}
                     </td>
                     <td className="p-3 text-center">
                       <span
                         className={`inline-block min-w-[2rem] text-xs font-bold font-mono px-2 py-0.5 rounded-pill border ${pointsBadgeClass(row.points_awarded)}`}
                       >
-                        {hasResult ? row.points_awarded : '—'}
+                        {hasResult ? row.points_awarded : '-'}
                       </span>
                     </td>
                   </tr>

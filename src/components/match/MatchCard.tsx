@@ -213,7 +213,7 @@ export function MatchCard({
 
       {hasResult && (
         <p className="text-center text-sm text-brand-blue font-medium mt-2 font-mono">
-          Result: {fixture.home_score} — {fixture.away_score}
+          Result: {fixture.home_score} - {fixture.away_score}
         </p>
       )}
     </div>

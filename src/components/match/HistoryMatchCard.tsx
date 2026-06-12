@@ -88,7 +88,7 @@ export function HistoryMatchCard({ fixture, prediction }: HistoryMatchCardProps)
 
       {hasResult && (
         <p className="text-center text-xs text-brand-blue font-medium mt-3 font-mono">
-          Result: {fixture.home_score} — {fixture.away_score}
+          Result: {fixture.home_score} - {fixture.away_score}
         </p>
       )}
 
