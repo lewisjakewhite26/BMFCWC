@@ -1,6 +1,7 @@
 export type HapticId =
   | 'saveSuccess'
   | 'matchdayLocked'
+  | 'threeLions'
   | 'recapSpotOn'
   | 'recapGreat'
   | 'recapSolid'
@@ -20,6 +21,8 @@ export const HAPTICS_CHANGE_EVENT = 'bmfc-haptics-change'
 const PATTERNS: Record<HapticId, number | number[]> = {
   saveSuccess: [60],
   matchdayLocked: [100, 80, 100, 50, 100, 80, 100, 50, 400],
+  // Three Lions — "Three Lions on a shirt" (Baddiel, Skinner & Lightning Seeds)
+  threeLions: [390, 230, 390, 250, 520, 140, 120, 280, 660, 980, 420, 220, 140, 170, 530, 220, 140, 170, 380, 180, 470],
   recapSpotOn: [40, 30, 40, 30, 40, 30, 40, 30, 200],
   recapGreat: [80, 60, 80, 60, 250],
   recapSolid: [120, 100, 120],
@@ -111,6 +114,10 @@ export function hapticSaveSuccess() {
 
 export function hapticMatchdayLocked() {
   triggerHaptic('matchdayLocked')
+}
+
+export function hapticThreeLions() {
+  triggerHaptic('threeLions', { force: true })
 }
 
 export function hapticRecapSpotOn() {

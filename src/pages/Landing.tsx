@@ -6,7 +6,7 @@ import { ClubLogo } from '../components/ui/ClubLogo'
 import { PageShell } from '../components/ui/PageBackground'
 import { PrizePotBanner } from '../components/ui/PrizePotBanner'
 import { usePrizePot } from '../hooks/usePrizePot'
-import { previewHaptic } from '../lib/haptics'
+import { hapticThreeLions } from '../lib/haptics'
 
 const POINTER_LERP = 0.044
 const POINTER_FADE = 0.036
@@ -404,7 +404,7 @@ export default function Landing() {
   const { stats: prizePot, loading: prizePotLoading } = usePrizePot()
 
   const handleCrestClick = () => {
-    previewHaptic('matchdayLocked')
+    hapticThreeLions()
     setCrestPulse(true)
     window.setTimeout(() => setCrestPulse(false), 900)
   }
