@@ -27,7 +27,7 @@ function formatSignupDate(iso: string): string {
 
 export default function AdminTechnical() {
   const { user, gameDays, fixtures, users, setUsers, loading, load, isDev } = useAdminData()
-  const [selectedGameDay, setSelectedGameDay] = useState<number | 'all'>('all')
+  const [selectedGameDay, setSelectedGameDay] = useState<number | 'all' | 'scored'>('all')
   const [passcodeResetUserId, setPasscodeResetUserId] = useState<string | null>(null)
   const [newPasscode, setNewPasscode] = useState('')
   const [resettingPasscodeUserId, setResettingPasscodeUserId] = useState<string | null>(null)
@@ -43,7 +43,9 @@ export default function AdminTechnical() {
   const filteredFixtures =
     selectedGameDay === 'all'
       ? fixtures.filter((f) => f.home_score === null || f.away_score === null)
-      : fixtures.filter((f) => f.game_day === selectedGameDay)
+      : selectedGameDay === 'scored'
+        ? fixtures.filter((f) => f.home_score !== null && f.away_score !== null)
+        : fixtures.filter((f) => f.game_day === selectedGameDay)
 
   const handleOpenGameDay = async (gameDay: number) => {
     if (!user) return
@@ -221,16 +223,23 @@ export default function AdminTechnical() {
 
         <AdminSection
           title="Manual Result Entry"
+          description="Wrong score? Choose Scored results or a matchday, edit the numbers, then Update — points recalculate automatically."
           headerExtra={
             <select
               value={selectedGameDay}
-              onChange={(e) => setSelectedGameDay(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+              onChange={(e) => {
+                const value = e.target.value
+                setSelectedGameDay(
+                  value === 'all' || value === 'scored' ? value : Number(value)
+                )
+              }}
               className="input-field w-full sm:w-auto text-sm py-2"
             >
-              <option value="all">All pending</option>
+              <option value="all">Pending only</option>
+              <option value="scored">Scored results</option>
               {gameDays.map((gd) => (
                 <option key={gd.id} value={gd.game_day}>
-                  {gd.label.replace(/Game Day/gi, 'Matchday')}
+                  {gd.label.replace(/Game Day/gi, 'Matchday')} (all)
                 </option>
               ))}
             </select>

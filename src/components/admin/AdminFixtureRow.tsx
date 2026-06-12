@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { ScoreInput } from '../match/ScoreInput'
 import { CountryFlag } from '../match/CountryFlag'
@@ -17,6 +17,11 @@ export function AdminFixtureRow({ fixture, onSubmitResult }: AdminFixtureRowProp
 
   const hasResult = fixture.home_score !== null && fixture.away_score !== null
 
+  useEffect(() => {
+    setHomeScore(fixture.home_score ?? '')
+    setAwayScore(fixture.away_score ?? '')
+  }, [fixture.home_score, fixture.away_score])
+
   const handleSubmit = async () => {
     if (homeScore === '' || awayScore === '') {
       toast.error('Enter both scores')
@@ -26,7 +31,7 @@ export function AdminFixtureRow({ fixture, onSubmitResult }: AdminFixtureRowProp
     setLoading(true)
     try {
       await onSubmitResult(fixture.id, homeScore as number, awayScore as number)
-      toast.success('Score saved and points updated')
+      toast.success(hasResult ? 'Score updated — points recalculated' : 'Score saved and points updated')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to confirm score')
     } finally {
