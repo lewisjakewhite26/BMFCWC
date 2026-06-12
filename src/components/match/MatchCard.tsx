@@ -3,7 +3,7 @@ import { MatchScoreLine, type MatchScoreLineHandle } from './MatchScoreLine'
 import { PointsBadge } from './PointsBadge'
 import { formatKickoffLocal, getStageLabel } from '../../lib/scoring'
 import { FixtureLockCountdown } from './FixtureLockCountdown'
-import { SubmitPredictionButton } from './SubmitPredictionButton'
+import { SaveStatusBadge, SAVE_SUCCESS_MS, type SavePhase } from './SaveFeedback'
 import { hapticTap } from '../../lib/haptics'
 import type { Fixture, Prediction } from '../../types'
 
@@ -32,7 +32,9 @@ export function MatchCard({
   const [homeScore, setHomeScore] = useState<number | ''>(prediction?.predicted_home ?? '')
   const [awayScore, setAwayScore] = useState<number | ''>(prediction?.predicted_away ?? '')
   const [confirmed, setConfirmed] = useState(() => !!prediction)
+  const [savePhase, setSavePhase] = useState<SavePhase>('idle')
   const userHasEdited = useRef(false)
+  const saveInFlight = useRef(false)
   const scoreLineRef = useRef<MatchScoreLineHandle>(null)
 
   useEffect(() => {
@@ -56,8 +58,45 @@ export function MatchCard({
 
   const persist = useCallback(async (home: number, away: number) => {
     if (!onSave) throw new Error('Save unavailable')
-    await onSave(fixture.id, home, away)
-  }, [fixture.id, onSave])
+    await onSave(home, away)
+  }, [onSave])
+
+  const tryAutoSubmit = useCallback(
+    async (home: number, away: number) => {
+      if (!editable || saveInFlight.current) return
+
+      const unchanged =
+        prediction?.predicted_home === home && prediction?.predicted_away === away
+
+      if (unchanged) {
+        setConfirmed(true)
+        onAdvanceToNext?.()
+        return
+      }
+
+      saveInFlight.current = true
+      setSavePhase('loading')
+
+      try {
+        await persist(home, away)
+        setSavePhase('success')
+        setConfirmed(true)
+        userHasEdited.current = false
+        hapticTap()
+
+        window.setTimeout(() => {
+          setSavePhase('idle')
+          saveInFlight.current = false
+          onAdvanceToNext?.()
+        }, SAVE_SUCCESS_MS)
+      } catch {
+        setSavePhase('error')
+        saveInFlight.current = false
+        window.setTimeout(() => setSavePhase('idle'), 2200)
+      }
+    },
+    [editable, prediction, persist, onAdvanceToNext]
+  )
 
   const handleHomeChange = (value: number | '') => {
     userHasEdited.current = true
@@ -71,12 +110,24 @@ export function MatchCard({
     setAwayScore(value)
   }
 
+  useEffect(() => {
+    if (!editable || !userHasEdited.current) return
+    if (homeScore === '' || awayScore === '') return
+    if (saveInFlight.current || savePhase !== 'idle') return
+
+    const timer = window.setTimeout(() => {
+      void tryAutoSubmit(homeScore as number, awayScore as number)
+    }, 450)
+
+    return () => window.clearTimeout(timer)
+  }, [homeScore, awayScore, editable, savePhase, tryAutoSubmit])
+
   const scoresComplete = homeScore !== '' && awayScore !== ''
   const scoresChanged =
     prediction?.predicted_home !== homeScore || prediction?.predicted_away !== awayScore
-  const isLockedIn = confirmed && scoresComplete && !scoresChanged
-  const isAwaitingPick = editable && !isLockedIn
-  const showSubmitButton = editable && scoresComplete && (!confirmed || scoresChanged)
+  const isLockedIn = confirmed && scoresComplete && !scoresChanged && savePhase === 'idle'
+  const isAwaitingPick = editable && !isLockedIn && savePhase === 'idle'
+  const isSaving = savePhase === 'loading' || savePhase === 'success'
 
   const displayHome = editable ? homeScore : (prediction?.predicted_home ?? (homeScore !== '' ? homeScore : ''))
   const displayAway = editable ? awayScore : (prediction?.predicted_away ?? (awayScore !== '' ? awayScore : ''))
@@ -89,7 +140,7 @@ export function MatchCard({
         ${!locked || hasResult ? (
           isLockedIn
             ? 'glass-card ring-1 ring-emerald-200/80'
-            : isAwaitingPick
+            : isAwaitingPick || isSaving
               ? 'bg-gradient-to-r from-brand-gold/[0.07] to-white/65 border border-brand-gold/25 shadow-sm ring-1 ring-brand-gold/10'
               : 'glass-card'
         ) : ''}
@@ -113,13 +164,14 @@ export function MatchCard({
           {getStageLabel(fixture.stage)}
           {fixture.group_name && ` · Group ${fixture.group_name}`}
         </span>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {isAwaitingPick && !scoresComplete && (
+        <div className="flex items-center gap-1.5 shrink-0 min-h-[1.75rem]">
+          <SaveStatusBadge phase={savePhase} />
+          {savePhase === 'idle' && isAwaitingPick && !scoresComplete && (
             <span className="text-[10px] sm:text-xs font-medium text-brand-gold/90 bg-brand-gold/10 border border-brand-gold/20 px-2 py-0.5 rounded-pill whitespace-nowrap">
               Not yet entered
             </span>
           )}
-          {isLockedIn && editable && (
+          {savePhase === 'idle' && isLockedIn && editable && (
             <span className="text-[10px] sm:text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-pill whitespace-nowrap">
               Submitted
             </span>
@@ -141,23 +193,11 @@ export function MatchCard({
         awayTeam={fixture.away_team}
         homeScore={displayHome}
         awayScore={displayAway}
-        editable={editable}
+        editable={editable && savePhase !== 'loading'}
         awaiting={isAwaitingPick}
         onHomeChange={editable ? handleHomeChange : undefined}
         onAwayChange={editable ? handleAwayChange : undefined}
-        onAwayComplete={editable ? onAdvanceToNext : undefined}
       />
-
-      {showSubmitButton && (
-        <SubmitPredictionButton
-          onSubmit={() => persist(homeScore as number, awayScore as number)}
-          onComplete={() => {
-            setConfirmed(true)
-            userHasEdited.current = false
-            hapticTap()
-          }}
-        />
-      )}
 
       {editable && <FixtureLockCountdown kickoffUtc={fixture.kickoff_utc} />}
 

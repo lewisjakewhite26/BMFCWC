@@ -17,7 +17,6 @@ interface MatchScoreLineProps {
   awaiting?: boolean
   onHomeChange?: (value: number | '') => void
   onAwayChange?: (value: number | '') => void
-  onAwayComplete?: () => void
 }
 
 function ScoreDisplay({ score }: { score: number | '' }) {
@@ -40,7 +39,6 @@ export const MatchScoreLine = forwardRef<MatchScoreLineHandle, MatchScoreLinePro
     awaiting = false,
     onHomeChange,
     onAwayChange,
-    onAwayComplete,
   },
   ref
 ) {
@@ -80,7 +78,6 @@ export const MatchScoreLine = forwardRef<MatchScoreLineHandle, MatchScoreLinePro
               ref={awayInputRef}
               value={awayScore}
               onChange={onAwayChange}
-              onAdvance={onAwayComplete}
               awaiting={awaiting}
               ariaLabel={`Predicted score for ${awayTeam}`}
             />
