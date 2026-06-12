@@ -14,7 +14,7 @@ import { fetchGroupStageGameDays, fetchOpenGameDay, fetchFixturesByGameDay } fro
 import { getDefaultGroupTab, getMatchdayTabState } from '../lib/matchdays'
 import { getEarliestKickoff } from '../lib/scoring'
 import { getTimeGreeting } from '../lib/greeting'
-import { hapticMatchdayLocked, previewHaptic } from '../lib/haptics'
+import { hapticMatchdayLocked, hapticRandomEasterEgg } from '../lib/haptics'
 import { isDevBypassSession, MOCK_GAME_DAYS, getMockFixturesByGameDay } from '../lib/devBypass'
 import { useMatchdayRecap } from '../hooks/useMatchdayRecap'
 import { MatchdayRecapModal } from '../components/dashboard/MatchdayRecapModal'
@@ -166,7 +166,7 @@ export default function Dashboard() {
   ]
 
   const handleNameClick = () => {
-    previewHaptic('recapGreat')
+    hapticRandomEasterEgg()
     const line = NAME_EASTER_EGG_LINES[Math.floor(Math.random() * NAME_EASTER_EGG_LINES.length)]
     setNameEasterEggLine(line)
     window.setTimeout(() => setNameEasterEggLine(null), 2800)

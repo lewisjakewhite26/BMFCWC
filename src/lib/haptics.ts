@@ -1,7 +1,13 @@
 export type HapticId =
   | 'saveSuccess'
   | 'matchdayLocked'
+  | 'vindaloo'
+  | 'worldInMotion'
+  | 'tomHark'
   | 'threeLions'
+  | 'freedFromDesire'
+  | 'heyJude'
+  | 'liquidator'
   | 'recapSpotOn'
   | 'recapGreat'
   | 'recapSolid'
@@ -21,8 +27,20 @@ export const HAPTICS_CHANGE_EVENT = 'bmfc-haptics-change'
 const PATTERNS: Record<HapticId, number | number[]> = {
   saveSuccess: [60],
   matchdayLocked: [100, 80, 100, 50, 100, 80, 100, 50, 400],
+  // Vindaloo — Fat Les
+  vindaloo: [190, 170, 130, 90, 840, 610, 210, 180, 120, 110, 810, 630, 190, 190, 100, 110, 420, 200, 180, 190, 120, 100, 440, 190, 430, 210, 980],
+  // World in Motion — New Order / ENGLANDneworder
+  worldInMotion: [120, 150, 130, 190, 130, 170, 450, 160, 150, 160, 380, 240, 140, 150, 150, 120, 130, 180, 140, 110, 130, 120, 100, 170, 360, 270, 140, 150, 140, 120, 120, 160, 420, 150, 120, 210, 380, 250, 150, 150, 140, 140, 120, 180, 130, 130, 140, 110, 120, 210, 360, 320, 150, 130, 140, 130, 90, 170, 230, 80, 140, 160, 130, 130, 110, 120, 290, 490, 170, 120, 150, 130, 150, 120, 130, 140, 280, 310, 130, 150, 140, 130, 110, 170, 230, 80, 140, 100, 120, 180, 250, 100, 210, 500, 150, 140, 420, 140, 160, 160, 200],
+  // Tom Hark — The Piranhas
+  tomHark: [110, 80, 340, 140, 140, 150, 310, 640, 110, 60, 380, 130, 130, 150, 290, 590, 100, 50, 160, 190, 110, 50, 130, 190, 260, 580, 100, 90, 410, 90, 120, 190, 400],
   // Three Lions — "Three Lions on a shirt" (Baddiel, Skinner & Lightning Seeds)
-  threeLions: [390, 230, 390, 250, 520, 140, 120, 280, 660, 980, 420, 220, 140, 170, 530, 220, 140, 170, 380, 180, 470],
+  threeLions: [360, 230, 390, 250, 520, 140, 120, 280, 660, 980, 420, 220, 140, 170, 530, 220, 140, 170, 380, 180, 470],
+  // Freed from Desire — Gala
+  freedFromDesire: [230, 230, 230, 230, 150, 190, 630, 390, 150, 80, 150, 130, 140, 140, 120, 150, 90, 70, 180, 170, 280, 310, 260, 160, 160, 180, 130, 160, 380, 80, 130],
+  // Hey Jude — The Beatles
+  heyJude: [540, 550, 400, 190, 430, 280, 110, 120, 100, 90, 130, 310, 1070, 810, 130, 110, 100, 120, 120, 330, 880, 400, 860, 210, 740],
+  // Liquidator — Harry J Allstars
+  liquidator: [110, 140, 130, 170, 100, 150, 90, 190, 150, 90, 120, 180, 100, 180, 70, 190, 140, 170, 80, 160, 100, 180, 90, 160, 150, 160, 100, 200, 80, 160, 70, 190, 130, 360, 120, 380, 120, 340, 120, 830, 240, 220, 280],
   recapSpotOn: [40, 30, 40, 30, 40, 30, 40, 30, 200],
   recapGreat: [80, 60, 80, 60, 250],
   recapSolid: [120, 100, 120],
@@ -116,8 +134,29 @@ export function hapticMatchdayLocked() {
   triggerHaptic('matchdayLocked')
 }
 
-export function hapticThreeLions() {
-  triggerHaptic('threeLions', { force: true })
+export type EasterEggHapticId =
+  | 'vindaloo'
+  | 'worldInMotion'
+  | 'tomHark'
+  | 'threeLions'
+  | 'freedFromDesire'
+  | 'heyJude'
+  | 'liquidator'
+
+const EASTER_EGG_IDS: EasterEggHapticId[] = [
+  'vindaloo',
+  'worldInMotion',
+  'tomHark',
+  'threeLions',
+  'freedFromDesire',
+  'heyJude',
+  'liquidator',
+]
+
+export function hapticRandomEasterEgg(): EasterEggHapticId {
+  const id = EASTER_EGG_IDS[Math.floor(Math.random() * EASTER_EGG_IDS.length)]
+  triggerHaptic(id, { force: true })
+  return id
 }
 
 export function hapticRecapSpotOn() {
