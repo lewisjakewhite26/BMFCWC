@@ -54,14 +54,22 @@ function KnockoutFixtureRow({
 }) {
   const [homeTeam, setHomeTeam] = useState(fixture.home_team)
   const [awayTeam, setAwayTeam] = useState(fixture.away_team)
+  const [homeFlag, setHomeFlag] = useState(fixture.home_flag ?? '')
+  const [awayFlag, setAwayFlag] = useState(fixture.away_flag ?? '')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setHomeTeam(fixture.home_team)
     setAwayTeam(fixture.away_team)
-  }, [fixture.home_team, fixture.away_team])
+    setHomeFlag(fixture.home_flag ?? '')
+    setAwayFlag(fixture.away_flag ?? '')
+  }, [fixture.home_team, fixture.away_team, fixture.home_flag, fixture.away_flag])
 
-  const changed = homeTeam !== fixture.home_team || awayTeam !== fixture.away_team
+  const changed =
+    homeTeam !== fixture.home_team ||
+    awayTeam !== fixture.away_team ||
+    homeFlag !== (fixture.home_flag ?? '') ||
+    awayFlag !== (fixture.away_flag ?? '')
 
   const handleSave = async () => {
     if (!userId || !sessionToken) return
@@ -84,6 +92,8 @@ function KnockoutFixtureRow({
         p_fixture_id: fixture.id,
         p_home_team: homeTeam.trim(),
         p_away_team: awayTeam.trim(),
+        p_home_flag: homeFlag.trim() || null,
+        p_away_flag: awayFlag.trim() || null,
       })
 
       if (error) throw error
@@ -108,21 +118,41 @@ function KnockoutFixtureRow({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-gray-500 mb-1">Home team</label>
-          <input
-            type="text"
-            value={homeTeam}
-            onChange={(e) => setHomeTeam(e.target.value)}
-            className="input-field text-sm py-2.5"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={homeFlag}
+              onChange={(e) => setHomeFlag(e.target.value)}
+              className="input-field text-sm py-2.5 w-16 text-center"
+              placeholder="🏳️"
+              aria-label="Home flag"
+            />
+            <input
+              type="text"
+              value={homeTeam}
+              onChange={(e) => setHomeTeam(e.target.value)}
+              className="input-field text-sm py-2.5 flex-1"
+            />
+          </div>
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Away team</label>
-          <input
-            type="text"
-            value={awayTeam}
-            onChange={(e) => setAwayTeam(e.target.value)}
-            className="input-field text-sm py-2.5"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={awayFlag}
+              onChange={(e) => setAwayFlag(e.target.value)}
+              className="input-field text-sm py-2.5 w-16 text-center"
+              placeholder="🏳️"
+              aria-label="Away flag"
+            />
+            <input
+              type="text"
+              value={awayTeam}
+              onChange={(e) => setAwayTeam(e.target.value)}
+              className="input-field text-sm py-2.5 flex-1"
+            />
+          </div>
         </div>
       </div>
 
