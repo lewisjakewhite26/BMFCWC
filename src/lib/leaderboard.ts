@@ -3,6 +3,9 @@ import type { LeaderboardEntry } from '../types'
 export const LEADERBOARD_TIEBREAKER_RULE =
   'If two or more players finish level on points at the end of the tournament, the tiebreaker is the most exact scores predicted across all matchdays. If that is also level, those players are declared joint winners.'
 
+export const KNOCKOUT_SCORING_RULE =
+  'Knockout matches are scored on the result after 90 minutes (normal time). Extra time and penalties are not counted.'
+
 export function areLeaderboardEntriesTied(a: LeaderboardEntry, b: LeaderboardEntry): boolean {
   return a.total_points === b.total_points && a.correct_scores === b.correct_scores
 }
