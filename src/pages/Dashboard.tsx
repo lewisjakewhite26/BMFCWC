@@ -37,7 +37,9 @@ export default function Dashboard() {
   const [lockedFixtures, setLockedFixtures] = useState<Set<number>>(new Set())
   const { track: easterEggTrack, trigger: triggerEasterEgg } = useEasterEggTrackToast()
   const groupPrevPredictionCount = useRef<number | null>(null)
+  const groupHapticReady = useRef(false)
   const knockoutPrevCount = useRef<number | null>(null)
+  const knockoutHapticReady = useRef(false)
 
   const selectedGameDay = groupGameDays.find((g) => g.game_day === selectedGroupDay) ?? null
   const matchdayOpen = selectedGameDay?.status === 'open'
@@ -91,6 +93,7 @@ export default function Dashboard() {
   }, [userId])
 
   useEffect(() => {
+    groupHapticReady.current = false
     groupPrevPredictionCount.current = null
   }, [selectedGroupDay])
 
@@ -117,9 +120,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!matchdayOpen || loadingFixtures || fixtures.length === 0) {
+      groupHapticReady.current = false
       groupPrevPredictionCount.current = null
       return
     }
+
+    if (!groupHapticReady.current) {
+      groupPrevPredictionCount.current = predictionCount
+      groupHapticReady.current = true
+      return
+    }
+
     const prev = groupPrevPredictionCount.current
     groupPrevPredictionCount.current = predictionCount
     if (prev !== null && prev < fixtures.length && predictionCount === fixtures.length) {
@@ -134,20 +145,29 @@ export default function Dashboard() {
   const knockoutOpen = knockoutGameDay?.status === 'open'
 
   useEffect(() => {
+    knockoutHapticReady.current = false
     knockoutPrevCount.current = null
   }, [knockoutGameDay?.game_day])
 
   useEffect(() => {
-    if (!knockoutOpen || knockoutTotal === 0) {
+    if (!knockoutOpen || knockoutTotal === 0 || knockoutPredictions.loading) {
+      knockoutHapticReady.current = false
       knockoutPrevCount.current = null
       return
     }
+
+    if (!knockoutHapticReady.current) {
+      knockoutPrevCount.current = knockoutLockedCount
+      knockoutHapticReady.current = true
+      return
+    }
+
     const prev = knockoutPrevCount.current
     knockoutPrevCount.current = knockoutLockedCount
     if (prev !== null && prev < knockoutTotal && knockoutLockedCount === knockoutTotal) {
       hapticMatchdayLocked()
     }
-  }, [knockoutLockedCount, knockoutTotal, knockoutOpen])
+  }, [knockoutLockedCount, knockoutTotal, knockoutOpen, knockoutPredictions.loading])
 
   const hasOpenGroupMatchday = groupGameDays.some((g) => g.status === 'open')
   const groupStageComplete = isGroupStageComplete(groupGameDays)
