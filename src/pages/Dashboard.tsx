@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { Navbar } from '../components/ui/Navbar'
 import { PageShell } from '../components/ui/PageBackground'
 import { GameDayPanel } from '../components/match/GameDayPanel'
@@ -11,7 +12,7 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary'
 import { useAuth } from '../hooks/useAuth'
 import { usePredictions } from '../hooks/usePredictions'
 import { fetchGroupStageGameDays, fetchOpenGameDay, fetchFixturesByGameDay } from '../lib/fixtures'
-import { getDefaultGroupTab, getMatchdayTabState } from '../lib/matchdays'
+import { getDefaultGroupTab, getMatchdayTabState, isGroupStageComplete } from '../lib/matchdays'
 import { getEarliestKickoff } from '../lib/scoring'
 import { getTimeGreeting } from '../lib/greeting'
 import { hapticMatchdayLocked } from '../lib/haptics'
@@ -147,7 +148,13 @@ export default function Dashboard() {
       hapticMatchdayLocked()
     }
   }, [knockoutLockedCount, knockoutTotal, knockoutOpen])
-  const loading = loadingDays || (loadingFixtures && fixtures.length === 0)
+
+  const hasOpenGroupMatchday = groupGameDays.some((g) => g.status === 'open')
+  const groupStageComplete = isGroupStageComplete(groupGameDays)
+  const showGroupStage = !groupStageComplete || !knockoutGameDay
+  const loading = loadingDays || (showGroupStage && loadingFixtures && fixtures.length === 0)
+  const knockoutLoading =
+    knockoutGameDay && knockoutPredictions.loading && knockoutPredictions.fixtures.length === 0
   const firstKickoff = useMemo(
     () => (selectedGameDay?.status === 'open' ? getEarliestKickoff(fixtures) : null),
     [fixtures, selectedGameDay?.status]
@@ -155,7 +162,6 @@ export default function Dashboard() {
   const tabState = selectedGameDay
     ? getMatchdayTabState(selectedGameDay, fixtures)
     : 'locked'
-  const hasOpenGroupMatchday = groupGameDays.some((g) => g.status === 'open')
   const hasAnyContent = hasOpenGroupMatchday || knockoutGameDay !== null || groupGameDays.some((g) => g.status === 'completed')
 
   const hasNoActiveGames = !loading && !hasAnyContent
@@ -193,8 +199,17 @@ export default function Dashboard() {
             </button>
           </h1>
           <p className="text-sm sm:text-base text-gray-500">
-            Pick your scores for each group game. Each fixture locks one minute before kickoff.
+            {showGroupStage
+              ? 'Pick your scores for each group game. Each fixture locks one minute before kickoff.'
+              : 'Pick your scores for each knockout fixture. Each fixture locks one minute before kickoff.'}
           </p>
+          {!showGroupStage && (
+            <p className="text-sm mt-1">
+              <Link to="/history" className="text-brand-blue font-medium hover:underline">
+                View previous matchdays →
+              </Link>
+            </p>
+          )}
         </div>
 
         <UserStatsGrid />
@@ -205,34 +220,36 @@ export default function Dashboard() {
           hasNoActiveGames ? (
             <EmptyDashboardCard />
           ) : (
-            <>
-              <GroupMatchdayTabs
-                gameDays={groupGameDays}
-                fixturesByDay={fixturesByDay}
-                selectedDay={selectedGroupDay}
-                onSelect={setSelectedGroupDay}
-              />
+            showGroupStage && (
+              <>
+                <GroupMatchdayTabs
+                  gameDays={groupGameDays}
+                  fixturesByDay={fixturesByDay}
+                  selectedDay={selectedGroupDay}
+                  onSelect={setSelectedGroupDay}
+                />
 
-              <DashboardStatusBanner
-                lockedCount={lockedCount}
-                total={fixtures.length}
-                firstKickoff={matchdayOpen ? firstKickoff : null}
-                hasOpenMatchday={matchdayOpen}
-                tabState={tabState}
-                onKickoffReached={() => reload({ silent: true })}
-              />
-            </>
+                <DashboardStatusBanner
+                  lockedCount={lockedCount}
+                  total={fixtures.length}
+                  firstKickoff={matchdayOpen ? firstKickoff : null}
+                  hasOpenMatchday={matchdayOpen}
+                  tabState={tabState}
+                  onKickoffReached={() => reload({ silent: true })}
+                />
+              </>
+            )
           )
         )}
 
         <ErrorBoundary>
-          {loading ? (
+          {loading || knockoutLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
                 <MatchCardSkeleton key={i} />
               ))}
             </div>
-          ) : selectedGameDay ? (
+          ) : showGroupStage && selectedGameDay ? (
             <GameDayPanel
               gameDay={selectedGameDay}
               fixtures={fixtures}
@@ -245,8 +262,10 @@ export default function Dashboard() {
           ) : null}
 
           {knockoutGameDay && (
-            <div className="space-y-4 pt-2">
-              <h2 className="font-display text-lg text-brand-navy">Knockout stage</h2>
+            <div className={`space-y-4 ${showGroupStage ? 'pt-2' : ''}`}>
+              {showGroupStage && (
+                <h2 className="font-display text-lg text-brand-navy">Knockout stage</h2>
+              )}
               <DashboardStatusBanner
                 lockedCount={knockoutPredictions.fixtures.filter((f) =>
                   knockoutPredictions.predictions.has(f.id)

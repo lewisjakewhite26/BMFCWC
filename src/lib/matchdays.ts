@@ -47,3 +47,10 @@ export function getDefaultGroupTab(
 export function getMatchdayCutoff(fixtures: Fixture[]): Date | null {
   return getGameDayCutoff(fixtures)
 }
+
+export function isGroupStageComplete(gameDays: GameDay[]): boolean {
+  return GROUP_STAGE_GAME_DAYS.every((day) => {
+    const gd = gameDays.find((g) => g.game_day === day)
+    return gd?.status === 'completed'
+  })
+}

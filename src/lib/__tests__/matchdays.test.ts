@@ -3,6 +3,7 @@ import {
   getDefaultGroupTab,
   getGroupTabLabel,
   getMatchdayTabState,
+  isGroupStageComplete,
   isGroupStageGameDay,
 } from '../matchdays'
 import type { Fixture, GameDay } from '../../types'
@@ -73,6 +74,22 @@ describe('matchdays', () => {
         3: [{ kickoff_utc: '2026-06-24T19:00:00.000Z', status: 'open', home_score: null, away_score: null }] as Fixture[],
       }
       expect(getDefaultGroupTab(gameDays, fixturesByDay)).toBe(2)
+    })
+  })
+
+  describe('isGroupStageComplete', () => {
+    it('returns true when all three group matchdays are completed', () => {
+      const gameDays = [1, 2, 3].map((day) => ({ ...openDay(day), status: 'completed' as const }))
+      expect(isGroupStageComplete(gameDays)).toBe(true)
+    })
+
+    it('returns false while any group matchday is still open', () => {
+      const gameDays = [
+        { ...openDay(1), status: 'completed' as const },
+        openDay(2),
+        { ...openDay(3), status: 'completed' as const },
+      ]
+      expect(isGroupStageComplete(gameDays)).toBe(false)
     })
   })
 })
